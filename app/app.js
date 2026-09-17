@@ -10,6 +10,7 @@
   var reportDay = 0;
   var undoInfo = null;
   var MENU = [];
+  var lastView = null;
   var installEvt = null;
   var hideInstall = false;
 
@@ -133,10 +134,12 @@
     var rep = Store.report(Store.dayStart(), Date.now() + 1);
 
     var h = '<header class="top"><div class="top-in">' +
-      '<div class="ttl"><b>Masalar</b></div>' +
+      '<div class="ttl"><b>Osman Gourmet</b></div>' +
       '<button class="who" id="btnWho">' + ic(I.person, 18) + "<span>" + esc(Store.settings().waiter) + "</span></button>" +
       '<button class="iconbtn" id="btnSettings" aria-label="Ayarlar">' + ic(I.gear, 21) + "</button>" +
-      "</div></header><div class='wrap'>";
+      "</div></header><div class='wrap'>" +
+      '<div class="bigtitle"><h1>Masalar</h1><p>' + open.length + " açık adisyon · " +
+      pendingCount() + " ürün mutfakta</p></div>";
 
     if (!navigator.onLine) {
       h += '<div class="strip off">' + ic(I.bell, 19) +
@@ -273,8 +276,9 @@
     });
     tickets.sort(function (a, b) { return a.at - b.at; });
 
-    var h = '<header class="top"><div class="top-in"><div class="ttl"><b>Mutfak</b>' +
-      "<span>" + tickets.length + " fiş bekliyor</span></div></div></header><div class='wrap'>";
+    var h = '<header class="top"><div class="top-in"><div class="ttl"><b>Osman Gourmet</b></div></div></header>' +
+      "<div class='wrap'><div class=\"bigtitle\"><h1>Mutfak</h1><p>" +
+      (tickets.length ? tickets.length + " fiş bekliyor" : "Her şey hazır") + "</p></div>";
 
     if (!tickets.length) {
       return h + '<div class="empty"><b>Sipariş yok</b><span>Garson gönderdiğinde fiş burada belirir</span></div></div>';
@@ -332,11 +336,12 @@
 
     var h = '<header class="top"><div class="top-in">' +
       '<button class="iconbtn" id="dayPrev" aria-label="Önceki gün">' + ic(I.back, 21) + "</button>" +
-      '<div class="ttl"><b>Gün sonu</b><span>' + esc(gun) + "</span></div>" +
+      '<div class="ttl"><b>Gün sonu</b></div>' +
       '<button class="iconbtn" id="dayNext" aria-label="Sonraki gün"' + (reportDay >= 0 ? " disabled" : "") + ">" + ic(I.fwd, 21) + "</button>" +
       '<button class="iconbtn" id="btnShare" aria-label="Paylaş">' + ic(I.share, 20) + "</button>" +
       "</div></header><div class='wrap'>";
 
+    h += '<div class="bigtitle"><h1>Gün sonu</h1><p>' + esc(gun) + "</p></div>";
     if (acik) h += '<div class="warnbar">' + acik + " masa hâlâ açık — ciroya dahil değil</div>";
 
     h += '<div class="hero"><span>Ciro</span><b class="num">' + money(r.ciro) + "</b></div>";
@@ -479,6 +484,13 @@
     else html = renderTables();
 
     app.innerHTML = html + renderPicker();
+    document.body.dataset.view = view;
+    if (view !== lastView) {
+      lastView = view;
+      app.classList.remove("enter");
+      void app.offsetWidth;
+      app.classList.add("enter");
+    }
 
     var pend = pendingCount(), rdy = Store.readyTables().length;
     $("#tabs").innerHTML = [
