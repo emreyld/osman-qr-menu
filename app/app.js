@@ -1221,8 +1221,35 @@
   }
 
   /* ================= AÇILIŞ ================= */
+  function splash(title, note, retry) {
+    return '<div class="gate"><div class="gbox">' +
+      '<div class="glogo">' + ic('<path d="M7 3h10a2 2 0 0 1 2 2v16l-3-2-2 2-2-2-2 2-2-2-3 2V5a2 2 0 0 1 2-2z"/><path d="M9 8h6M9 12h6M9 16h4"/>', 34) + "</div>" +
+      "<h1>" + esc(title) + "</h1><p>" + esc(note) + "</p>" +
+      (retry ? '<button class="btn go big wide" id="bootRetry" type="button">Tekrar dene</button>' +
+               '<button class="btn plain wide" id="bootReset" type="button" style="margin-top:10px">Cihaz verisini temizle</button>' : "") +
+      "</div></div>";
+  }
+
+  function hardReset() {
+    try { localStorage.clear(); } catch (e) {}
+    try {
+      var d = indexedDB.deleteDatabase("osman-pos");
+      d.onsuccess = d.onerror = d.onblocked = function () { location.reload(); };
+      setTimeout(function () { location.reload(); }, 1500);
+    } catch (e) { location.reload(); }
+  }
+
   function boot() {
     app = $("#app");
+    app.innerHTML = splash("Osman Gourmet", "Yükleniyor...", false);
+    document.body.dataset.view = "gate";
+
+    document.addEventListener("click", function (e) {
+      if (e.target.closest("#bootRetry")) location.reload();
+      if (e.target.closest("#bootReset")) {
+        if (confirm("Bu cihazdaki yerel kayıtlar silinecek. Sunucudaki veriler etkilenmez. Devam?")) hardReset();
+      }
+    });
     try { hideInstall = localStorage.getItem("osman-hide-install") === "1"; } catch (e) {}
 
     window.addEventListener("beforeinstallprompt", function (e) {
@@ -1262,9 +1289,10 @@
         if (view !== "report" && !picker && $("#modal").hidden) render();
       }, 30000);
     }).catch(function (err) {
-      app.innerHTML = '<div class="wrap"><div class="empty"><b>Açılamadı</b><span>' +
-        esc(err && err.message || err) + "</span></div></div>";
       console.error(err);
+      app.innerHTML = splash("Açılamadı", (err && err.message) || String(err), true);
+      $("#tabs").innerHTML = "";
+      document.body.dataset.view = "gate";
     });
   }
 

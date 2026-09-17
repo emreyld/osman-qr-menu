@@ -27,6 +27,11 @@ header p{color:var(--muted);font-size:14px;margin-top:5px}
 .qr canvas,.qr img{display:block;width:100%;height:100%}
 .qr .url{font:600 14px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--green);word-break:break-all}
 .qr .hint{color:var(--muted);font-size:13px;margin-top:8px}
+.qr .qtitle{font-size:15px;font-weight:600;margin-bottom:14px}
+.creds{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px;text-align:start}
+.creds div{background:var(--panel-2);border-radius:10px;padding:10px 12px}
+.creds span{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.creds b{display:block;font:600 13.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--green)}
 
 .group{margin-bottom:28px}
 .group h2{margin-bottom:10px}
@@ -63,9 +68,14 @@ footer b{color:var(--text)}
   </header>
 
   <section class="qr">
+    <p class="qtitle">Garson uygulamasını telefona kur</p>
     <div class="box" id="qrbox"></div>
     <p class="url" id="url"></p>
-    <p class="hint">Telefonun kamerasıyla okut</p>
+    <p class="hint">Kamerayla okut → açılınca <b>Ana Ekrana Ekle</b> de</p>
+    <div class="creds">
+      <div><span>yönetici</span><b>osman</b><b>Osman2026!pos</b></div>
+      <div><span>garson</span><b>ali</b><b>Ali12345</b></div>
+    </div>
   </section>
 
   <div class="group">
@@ -103,7 +113,7 @@ footer b{color:var(--text)}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 (function(){
-  var base = location.origin + location.pathname.replace(/index\.html$/,"");
+  var base = location.origin + location.pathname.replace(/index\.html$/,"") + "app/";
   document.getElementById("url").textContent = base;
   var box = document.getElementById("qrbox");
   if (window.QRCode) {

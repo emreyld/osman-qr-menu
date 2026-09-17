@@ -26,15 +26,25 @@
   /* ================= IndexedDB ================= */
   function open() {
     return new Promise(function (res, rej) {
-      var r = indexedDB.open(DB_NAME, DB_VER);
+      var r, done = false;
+      try { r = indexedDB.open(DB_NAME, DB_VER); }
+      catch (e) { return rej(new Error("Cihaz deposu açılamadı")); }
+
       r.onupgradeneeded = function (e) {
         var d = e.target.result;
         ["orders", "meta", "cache", "outbox"].forEach(function (n) {
           if (!d.objectStoreNames.contains(n)) d.createObjectStore(n, { keyPath: "k" });
         });
       };
-      r.onsuccess = function () { res(r.result); };
-      r.onerror = function () { rej(r.error); };
+      r.onsuccess = function () { done = true; res(r.result); };
+      r.onerror = function () { done = true; rej(r.error || new Error("Cihaz deposu hatası")); };
+      r.onblocked = function () {
+        rej(new Error("Uygulama başka bir sekmede açık. O sekmeyi kapatıp tekrar dene."));
+      };
+      /* hiçbir olay gelmezse takılı kalmasın */
+      setTimeout(function () {
+        if (!done) rej(new Error("Cihaz deposu yanıt vermedi"));
+      }, 8000);
     });
   }
   function tx(store, mode) { return db.transaction(store, mode).objectStore(store); }
@@ -282,7 +292,11 @@
         return Promise.all([reloadFromCache(), kvGet("outbox", "queue")]);
       }).then(function (r) {
         outbox = r[1] || [];
-        return pull();
+        /* sunucu yanıt vermezse açılışı bekletme — önbellekle başla */
+        return Promise.race([
+          pull(),
+          new Promise(function (ok) { setTimeout(ok, 6000); })
+        ]);
       }).then(function () {
         startPolling();
         window.addEventListener("online", function () { flush().then(pull).then(function () { emit("sync"); }); });
