@@ -1,0 +1,19 @@
+{
+  "name": "Osman Gourmet — Garson",
+  "short_name": "Garson",
+  "description": "Masa planı, sipariş alma, mutfak ekranı ve gün sonu raporu",
+  "lang": "tr",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F5F2EC",
+  "theme_color": "#14654B",
+  "categories": ["business", "food", "productivity"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

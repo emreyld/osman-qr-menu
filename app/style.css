@@ -38,6 +38,8 @@
 }
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+button,.tcard,.line,.fav,.mrow,.alert,.tabs button{touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 html,body{overscroll-behavior-y:none}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.4 var(--font);
   -webkit-font-smoothing:antialiased;padding-bottom:calc(72px + env(safe-area-inset-bottom))}
@@ -49,12 +51,14 @@ input{font:inherit;font-family:var(--font)}
 :focus-visible{outline:3px solid var(--hot);outline-offset:2px;border-radius:8px}
 [hidden]{display:none!important}
 .num{font-variant-numeric:tabular-nums;letter-spacing:-.01em}
-.wrap{max-width:780px;margin:0 auto;padding-inline:14px}
+.wrap{max-width:780px;margin:0 auto;
+  padding-inline:max(14px,env(safe-area-inset-left)) max(14px,env(safe-area-inset-right))}
 .cap{font-size:13px;font-weight:600;color:var(--muted);margin:18px 0 8px}
 
 /* ---------- üst ---------- */
 .top{position:sticky;top:0;z-index:30;background:var(--surf);border-bottom:1px solid var(--line)}
-.top-in{display:flex;align-items:center;gap:10px;max-width:780px;margin:0 auto;padding:9px 12px;min-height:60px}
+.top-in{display:flex;align-items:center;gap:10px;max-width:780px;margin:0 auto;min-height:60px;
+  padding:9px max(12px,env(safe-area-inset-right)) 9px max(12px,env(safe-area-inset-left))}
 .top .ttl{flex:1;min-width:0}
 .top .ttl b{display:block;font-size:21px;font-weight:700;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .top .ttl span{display:block;font-size:13.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -191,7 +195,8 @@ input{font:inherit;font-family:var(--font)}
 .bar{position:fixed;left:0;right:0;bottom:calc(72px + env(safe-area-inset-bottom));z-index:35;
   background:var(--surf);border-top:1px solid var(--line);box-shadow:0 -6px 18px rgba(30,22,10,.08);
   padding-bottom:2px}
-.bar-in{max-width:780px;margin:0 auto;padding:10px 12px;display:flex;align-items:center;gap:10px}
+.bar-in{max-width:780px;margin:0 auto;display:flex;align-items:center;gap:10px;
+  padding:10px max(12px,env(safe-area-inset-right)) 10px max(12px,env(safe-area-inset-left))}
 .bar .tot{flex:1;min-width:0}
 .bar .tot span{display:block;font-size:12.5px;color:var(--muted);font-weight:600}
 .bar .tot b{display:block;font-size:25px;font-weight:800;letter-spacing:-.03em;line-height:1.1}
@@ -206,7 +211,12 @@ input{font:inherit;font-family:var(--font)}
 .btn.plain{background:var(--surf-2);color:var(--ink)}
 .btn.big{font-size:18px;min-height:58px;padding:0 22px}
 .btn.wide{width:100%}
-.btn.add{width:56px;min-height:56px;padding:0;background:var(--go-soft);color:var(--go);flex:none}
+.btn.add{min-height:50px;padding:0 16px;background:var(--go-soft);color:var(--go);flex:none;font-size:16px}
+.bar.two .bar-in{flex-wrap:wrap;padding-top:9px}
+.bar.two .row1{display:flex;align-items:center;gap:10px;width:100%}
+.bar.two .row2{display:flex;align-items:stretch;gap:9px;width:100%}
+.bar.two .row2 .btn{flex:1}
+.btn.sq{width:58px;min-height:58px;padding:0;flex:none;background:var(--surf-2)}
 
 /* ---------- mutfak ---------- */
 .kgrid{display:grid;gap:10px;padding-block:12px 18px}
@@ -253,7 +263,7 @@ input{font:inherit;font-family:var(--font)}
 .cats button{flex:none;padding:0 15px;height:42px;border-radius:21px;background:var(--surf-2);
   font-size:15px;font-weight:600;color:var(--ink-2);white-space:nowrap}
 .cats button[aria-pressed=true]{background:var(--go);color:var(--go-ink)}
-.pbody{flex:1;overflow-y:auto;padding-bottom:16px}
+.pbody{flex:1;overflow-y:auto;padding-bottom:16px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 .sect{font-size:13px;font-weight:700;color:var(--muted);padding:16px 14px 8px}
 
 .favs{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 14px 0}
@@ -284,7 +294,7 @@ input{font:inherit;font-family:var(--font)}
 .modal{position:fixed;inset:0;z-index:70;display:flex;align-items:flex-end;justify-content:center}
 @media(min-width:640px){.modal{align-items:center}}
 .modal .bd{position:absolute;inset:0;background:rgba(20,14,6,.45)}
-.modal .card{position:relative;width:100%;max-width:460px;max-height:90vh;overflow-y:auto;background:var(--surf);
+.modal .card{position:relative;width:100%;max-width:460px;max-height:90vh;overflow-y:auto;overscroll-behavior:contain;background:var(--surf);
   border-radius:22px 22px 0 0;padding:8px 18px calc(22px + env(safe-area-inset-bottom));box-shadow:var(--lift)}
 @media(min-width:640px){.modal .card{border-radius:20px;padding-bottom:22px}}
 .modal .grab{width:44px;height:5px;border-radius:3px;background:var(--surf-3);margin:0 auto 14px}
@@ -357,3 +367,29 @@ input{font:inherit;font-family:var(--font)}
   z-index:80;background:var(--ink);color:var(--bg);padding:14px 20px;border-radius:14px;
   font-size:16px;font-weight:600;box-shadow:var(--lift);max-width:90vw;text-align:center}
 .toast[hidden]{display:none}
+
+
+/* ---------- mobil eklentiler ---------- */
+.line.ready{animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:var(--shadow)}50%{box-shadow:0 0 0 4px var(--hot-soft)}}
+@media (prefers-reduced-motion:reduce){.line.ready{animation:none}}
+
+/* çevrimdışı / kurulum şeridi */
+.strip{display:flex;align-items:center;gap:11px;margin-top:12px;border-radius:var(--r);
+  padding:12px 14px;font-size:14.5px;font-weight:600;background:var(--surf-2);color:var(--ink-2)}
+.strip.off{background:var(--amber-soft);color:var(--amber)}
+.strip .x{margin-inline-start:auto;width:34px;height:34px;border-radius:17px;background:rgba(0,0,0,.06);
+  display:grid;place-items:center;font-size:17px;flex:none}
+.strip b{font-weight:700}
+
+/* yatay kullanım — mutfak tableti */
+@media (orientation:landscape) and (min-width:700px){
+  .kgrid{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+  .tgrid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}
+}
+/* alçak ekranda üst çubuk incelsin */
+@media (max-height:700px){
+  .top-in{min-height:52px;padding-block:6px}
+  .top .ttl b{font-size:19px}
+  .tcard{min-height:100px}
+}

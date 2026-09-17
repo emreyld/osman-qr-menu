@@ -10,6 +10,8 @@
   var reportDay = 0;
   var undoInfo = null;
   var MENU = [];
+  var installEvt = null;
+  var hideInstall = false;
 
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var app = null;
@@ -77,6 +79,29 @@
     document.body.style.overflow = "";
   }
 
+  function standalone() {
+    return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+  }
+  function isIOS() {
+    return /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  }
+
+  /* servis sırasında ekran kendi kendine kapanmasın */
+  var wake = null;
+  function keepAwake(on) {
+    if (!("wakeLock" in navigator)) return;
+    if (on && !wake) {
+      navigator.wakeLock.request("screen").then(function (w) {
+        wake = w;
+        w.addEventListener("release", function () { wake = null; });
+      }).catch(function () {});
+    } else if (!on && wake) {
+      try { wake.release(); } catch (e) {}
+      wake = null;
+    }
+  }
+
   /* ---------- durum ---------- */
   function live(o) { return (o.items || []).filter(function (li) { return li.status !== "void"; }); }
   function count(o, st) {
@@ -112,6 +137,22 @@
       '<button class="who" id="btnWho">' + ic(I.person, 18) + "<span>" + esc(Store.settings().waiter) + "</span></button>" +
       '<button class="iconbtn" id="btnSettings" aria-label="Ayarlar">' + ic(I.gear, 21) + "</button>" +
       "</div></header><div class='wrap'>";
+
+    if (!navigator.onLine) {
+      h += '<div class="strip off">' + ic(I.bell, 19) +
+        "<span><b>Çevrimdışı</b> — kayıtlar cihazda tutuluyor</span></div>";
+    }
+    if (!hideInstall && !standalone()) {
+      if (installEvt) {
+        h += '<div class="strip" id="instStrip">' + ic(I.plus, 19) +
+          "<span><b>Ana ekrana ekle</b> — tam ekran açılır</span>" +
+          '<button class="x" id="instX" aria-label="Kapat">×</button></div>';
+      } else if (isIOS()) {
+        h += '<div class="strip" id="instStrip">' + ic(I.share, 19) +
+          "<span>Paylaş → <b>Ana Ekrana Ekle</b> dersen uygulama gibi açılır</span>" +
+          '<button class="x" id="instX" aria-label="Kapat">×</button></div>';
+      }
+    }
 
     Store.readyTables().forEach(function (o) {
       var t = Store.table(o.tableId);
@@ -208,10 +249,15 @@
     else if (nReady) primary = '<button class="btn hot big" id="btnServe">Servis ettim · ' + nReady + "</button>";
     else primary = '<button class="btn go big" id="btnPay"' + (live(o).length ? "" : " disabled") + ">Hesap</button>";
 
-    h += '<div class="bar"><div class="bar-in">' +
-      '<button class="btn add" id="btnAdd" aria-label="Ürün ekle">' + ic(I.plus, 24) + "</button>" +
-      '<div class="tot"><span>Toplam</span><b class="num">' + money(tot.total) + "</b></div>" +
-      primary + "</div></div>";
+    h += '<div class="bar two"><div class="bar-in">' +
+      '<div class="row1">' +
+        '<div class="tot"><span>Toplam</span><b class="num">' + money(tot.total) + "</b></div>" +
+        '<button class="btn add" id="btnAdd">' + ic(I.plus, 20) + " Ürün ekle</button>" +
+      "</div>" +
+      '<div class="row2">' +
+        '<button class="btn sq" id="btnBack2" aria-label="Masalara dön">' + ic(I.back, 22) + "</button>" +
+        primary +
+      "</div></div></div>";
     return h;
   }
 
@@ -447,6 +493,7 @@
     }).join("");
 
     document.body.classList.toggle("hasbar", !!$(".bar"));
+    keepAwake(view === "order" || view === "kitchen" || !!picker);
     if (picker && picker.focus) { var el = $("#pq"); if (el) { el.focus(); picker.focus = false; } }
   }
 
@@ -919,6 +966,18 @@
       }
       if ((el = e.target.closest("[data-table]"))) return openTableFlow(el.dataset.table);
       if ((el = e.target.closest("[data-zone]"))) { zone = el.dataset.zone; return render(); }
+      if (e.target.closest("#instX")) {
+        hideInstall = true;
+        try { localStorage.setItem("osman-hide-install", "1"); } catch (x) {}
+        return render();
+      }
+      if (e.target.closest("#instStrip")) {
+        if (installEvt) {
+          installEvt.prompt();
+          installEvt.userChoice.then(function () { installEvt = null; render(); });
+        }
+        return;
+      }
       if (e.target.closest("#btnWho")) return whoFlow();
       if (e.target.closest("#btnSettings")) return settingsFlow();
       if (e.target.closest("#btnUndo")) {
@@ -926,7 +985,9 @@
           undoInfo = null; currentOrder = o.id; view = "order"; toast("Geri alındı"); render();
         }).catch(function (m) { toast(m); undoInfo = null; render(); });
       }
-      if (e.target.closest("#btnBack")) { view = "tables"; currentOrder = null; return render(); }
+      if (e.target.closest("#btnBack") || e.target.closest("#btnBack2")) {
+        view = "tables"; currentOrder = null; return render();
+      }
       if (e.target.closest("#btnMore")) return moreFlow();
       if (e.target.closest("#btnAdd")) { picker = { q: "", cat: "", focus: false }; return render(); }
       if (e.target.closest("#btnSend") || e.target.closest("#pSend")) {
@@ -1007,6 +1068,18 @@
   /* ================= AÇILIŞ ================= */
   function boot() {
     app = $("#app");
+    try { hideInstall = localStorage.getItem("osman-hide-install") === "1"; } catch (e) {}
+
+    window.addEventListener("beforeinstallprompt", function (e) {
+      e.preventDefault(); installEvt = e; if (app.innerHTML) render();
+    });
+    window.addEventListener("appinstalled", function () { installEvt = null; hideInstall = true; render(); });
+    window.addEventListener("online", function () { toast("Bağlantı geri geldi"); render(); });
+    window.addEventListener("offline", function () { toast("Çevrimdışısın — kayıtlar cihazda"); render(); });
+    document.addEventListener("visibilitychange", function () {
+      if (!document.hidden) { keepAwake(view === "order" || view === "kitchen" || !!picker); render(); }
+    });
+
     Store.init().then(function () {
       MENU = Store.menu();
       wire();
