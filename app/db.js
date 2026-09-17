@@ -23,8 +23,10 @@
 
   var DEFAULTS = {
     tables: null,                  // açılışta doldurulur
-    waiter: "Garson",
-    serviceNote: "",
+    waiters: ["Ahmet", "Mehmet", "Ayşe"],
+    waiter: "Ahmet",
+    soldOut: [],                   // bugün tükenen ürünler (mid listesi)
+    seq: { day: 0, n: 0 },         // günlük adisyon numarası
     kdv: 10
   };
 
@@ -173,6 +175,9 @@
           return put("meta", { k: "settings", v: settings });
         }
         if (!settings.tables || !settings.tables.length) settings.tables = defaultTables();
+        if (!settings.waiters) settings.waiters = ["Ahmet", "Mehmet", "Ayşe"];
+        if (!settings.soldOut) settings.soldOut = [];
+        if (!settings.seq) settings.seq = { day: 0, n: 0 };
       }).then(function () { return Store; });
     },
 
@@ -213,16 +218,25 @@
       return orders.filter(function (o) { return o.id === id; })[0];
     },
 
-    openTable: function (tableId, guests) {
+    nextNo: function () {
+      var d = dayStart();
+      if (settings.seq.day !== d) settings.seq = { day: d, n: 0 };
+      settings.seq.n += 1;
+      put("meta", { k: "settings", v: settings });
+      return settings.seq.n;
+    },
+
+    openTable: function (tableId, guests, waiter) {
       var existing = Store.orderByTable(tableId);
       if (existing) return Promise.resolve(existing);
       var o = {
         id: uid("o"),
+        no: Store.nextNo(),
         tableId: tableId,
         status: "open",
         openedAt: Date.now(),
         closedAt: null,
-        waiter: settings.waiter,
+        waiter: waiter || settings.waiter,
         guests: guests || 2,
         items: [],
         discount: null,
@@ -272,6 +286,48 @@
       var li = o.items.filter(function (x) { return x.lid === lid; })[0];
       if (li) { li.status = status; if (status === "ready") li.readyAt = Date.now(); }
       return put("orders", o).then(function () { broadcast("kitchen"); return o; });
+    },
+
+    markServed: function (orderId, lid) {
+      var o = Store.order(orderId); if (!o) return Promise.reject("adisyon yok");
+      o.items.forEach(function (li) {
+        if (li.status === "ready" && (!lid || li.lid === lid)) { li.status = "served"; li.servedAt = Date.now(); }
+      });
+      return put("orders", o).then(function () { broadcast("served"); return o; });
+    },
+
+    readyCount: function (o) {
+      return (o.items || []).filter(function (li) { return li.status === "ready"; })
+        .reduce(function (s2, li) { return s2 + li.qty; }, 0);
+    },
+
+    readyTables: function () {
+      return Store.openOrders().filter(function (o) { return Store.readyCount(o) > 0; });
+    },
+
+    /* ---------- tükenen ürün ---------- */
+    isSoldOut: function (mid) { return settings.soldOut.indexOf(mid) >= 0; },
+    toggleSoldOut: function (mid) {
+      var i = settings.soldOut.indexOf(mid);
+      if (i >= 0) settings.soldOut.splice(i, 1); else settings.soldOut.push(mid);
+      return put("meta", { k: "settings", v: settings }).then(function () { broadcast("soldout"); });
+    },
+    clearSoldOut: function () {
+      settings.soldOut = [];
+      return put("meta", { k: "settings", v: settings }).then(function () { broadcast("soldout"); });
+    },
+
+    /* ---------- yedek ---------- */
+    exportAll: function () {
+      return { v: 1, at: Date.now(), settings: settings, orders: orders };
+    },
+    importAll: function (data) {
+      if (!data || !data.orders) return Promise.reject("dosya tanınmadı");
+      orders = data.orders;
+      if (data.settings) settings = data.settings;
+      var writes = orders.map(function (o) { return put("orders", o); });
+      writes.push(put("meta", { k: "settings", v: settings }));
+      return Promise.all(writes).then(function () { broadcast("import"); });
     },
 
     markTableReady: function (orderId) {
@@ -431,7 +487,7 @@
     report: function (from, to) {
       var list = Store.closedBetween(from, to);
       var ciro = 0, indirim = 0, ikram = 0, iptal = 0, kisi = 0;
-      var byHour = {}, byItem = {}, byCat = {}, byPay = {};
+      var byHour = {}, byItem = {}, byCat = {}, byPay = {}, byWaiter = {};
       list.forEach(function (o) {
         var t = o.totals || totals(o);
         ciro += t.total; indirim += t.discount; ikram += t.promo; kisi += (o.guests || 0);
@@ -439,6 +495,9 @@
         var h = new Date(o.closedAt).getHours();
         byHour[h] = (byHour[h] || 0) + t.total;
         byPay[o.payment || "—"] = (byPay[o.payment || "—"] || 0) + t.total;
+        var w = o.waiter || "—";
+        if (!byWaiter[w]) byWaiter[w] = { name: w, adisyon: 0, tutar: 0, kisi: 0 };
+        byWaiter[w].adisyon++; byWaiter[w].tutar += t.total; byWaiter[w].kisi += (o.guests || 0);
         (o.items || []).forEach(function (li) {
           if (li.status === "void") return;
           var k = li.name;
@@ -463,6 +522,8 @@
         kisiOrt: kisi ? Math.round(ciro / kisi) : 0,
         byHour: byHour,
         byPay: byPay,
+        waiters: Object.keys(byWaiter).map(function (k) { return byWaiter[k]; })
+          .sort(function (a, b) { return b.tutar - a.tutar; }),
         items: arr(byItem),
         cats: arr(byCat),
         list: list.sort(function (a, b) { return b.closedAt - a.closedAt; })
@@ -492,12 +553,13 @@
           items.push({
             lid: uid("l"), mid: m.mid, name: m.name, catName: m.catName,
             price: m.price, qty: 1 + Math.floor(Math.random() * 2), note: "",
-            status: "ready", sentAt: openedAt + 120000
+            status: "served", sentAt: openedAt + 120000
           });
         }
         var o = {
-          id: uid("o"), tableId: t.id, status: "closed",
-          openedAt: openedAt, closedAt: closedAt, waiter: settings.waiter,
+          id: uid("o"), no: i + 1, tableId: t.id, status: "closed",
+          openedAt: openedAt, closedAt: closedAt,
+          waiter: settings.waiters[i % settings.waiters.length],
           guests: 2 + Math.floor(Math.random() * 3), items: items,
           discount: null, payment: Math.random() < 0.65 ? "kart" : "nakit"
         };
