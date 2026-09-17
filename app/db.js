@@ -1,0 +1,386 @@
+/* Veri katmanı — şimdilik tarayıcıda (IndexedDB), sonra sunucuya taşınacak.
+   Uygulamanın geri kalanı sadece Store üzerinden konuşur; kalıcılık değişince
+   burası değişir, ekranlar değişmez. */
+(function () {
+  "use strict";
+
+  var DB_NAME = "osman-pos";
+  var DB_VER = 1;
+  var db = null;
+  var orders = [];                 // bellekteki tüm adisyonlar
+  var settings = null;
+  var listeners = [];
+  var chan = ("BroadcastChannel" in window) ? new BroadcastChannel("osman-pos") : null;
+
+  /* ---------- varsayılan masa düzeni ---------- */
+  function defaultTables() {
+    var t = [];
+    for (var i = 1; i <= 12; i++) t.push({ id: "S" + i, name: String(i), zone: "Salon", seats: 4 });
+    for (var j = 1; j <= 8; j++) t.push({ id: "B" + j, name: "B" + j, zone: "Bahçe", seats: 4 });
+    for (var k = 1; k <= 6; k++) t.push({ id: "U" + k, name: "Ü" + k, zone: "Üst Kat", seats: 6 });
+    return t;
+  }
+
+  var DEFAULTS = {
+    tables: null,                  // açılışta doldurulur
+    waiter: "Garson",
+    serviceNote: "",
+    kdv: 10
+  };
+
+  /* ---------- IndexedDB ---------- */
+  function open() {
+    return new Promise(function (res, rej) {
+      var req = indexedDB.open(DB_NAME, DB_VER);
+      req.onupgradeneeded = function (e) {
+        var d = e.target.result;
+        if (!d.objectStoreNames.contains("orders")) {
+          var s = d.createObjectStore("orders", { keyPath: "id" });
+          s.createIndex("status", "status");
+          s.createIndex("openedAt", "openedAt");
+        }
+        if (!d.objectStoreNames.contains("meta")) d.createObjectStore("meta", { keyPath: "k" });
+      };
+      req.onsuccess = function () { res(req.result); };
+      req.onerror = function () { rej(req.error); };
+    });
+  }
+
+  function tx(store, mode) { return db.transaction(store, mode).objectStore(store); }
+
+  function put(store, val) {
+    return new Promise(function (res, rej) {
+      var r = tx(store, "readwrite").put(val);
+      r.onsuccess = function () { res(val); };
+      r.onerror = function () { rej(r.error); };
+    });
+  }
+
+  function all(store) {
+    return new Promise(function (res, rej) {
+      var r = tx(store, "readonly").getAll();
+      r.onsuccess = function () { res(r.result || []); };
+      r.onerror = function () { rej(r.error); };
+    });
+  }
+
+  function get(store, key) {
+    return new Promise(function (res, rej) {
+      var r = tx(store, "readonly").get(key);
+      r.onsuccess = function () { res(r.result); };
+      r.onerror = function () { rej(r.error); };
+    });
+  }
+
+  /* ---------- yardımcılar ---------- */
+  function uid(p) {
+    return (p || "o") + "_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  }
+
+  function emit(reason) {
+    listeners.forEach(function (fn) { try { fn(reason); } catch (e) { console.error(e); } });
+  }
+
+  function broadcast(reason) {
+    emit(reason);
+    if (chan) chan.postMessage({ reason: reason, at: Date.now() });
+  }
+
+  if (chan) {
+    chan.onmessage = function () {
+      /* başka sekme yazdı — belleği tazele */
+      all("orders").then(function (rows) { orders = rows; emit("remote"); });
+    };
+  }
+
+  function dayStart(ts) {
+    var d = new Date(ts || Date.now());
+    /* iş günü 06:00'da başlar — gece 02:00 kapanışı aynı güne yazılsın */
+    if (d.getHours() < 6) d.setDate(d.getDate() - 1);
+    d.setHours(6, 0, 0, 0);
+    return d.getTime();
+  }
+
+  /* ---------- menü düzleştirme ---------- */
+  function flatMenu() {
+    var out = [];
+    (window.MENU || []).forEach(function (cat) {
+      cat.items.forEach(function (it, i) {
+        out.push({
+          mid: cat.id + "-" + i,
+          cat: cat.id,
+          catName: cat.n.tr,
+          name: it.i.tr,
+          nameEn: it.i.en,
+          desc: it.d ? it.d.tr : "",
+          price: it.p,
+          kcal: it.k,
+          tags: it.t || []
+        });
+      });
+    });
+    return out;
+  }
+
+  /* ---------- hesaplama ---------- */
+  function lineTotal(li) { return (li.price || 0) * li.qty; }
+
+  function totals(order) {
+    var sub = (order.items || []).reduce(function (s, li) { return s + lineTotal(li); }, 0);
+    var disc = 0;
+    if (order.discount) {
+      if (order.discount.type === "percent") disc = Math.round(sub * order.discount.value / 100);
+      else if (order.discount.type === "amount") disc = Math.min(order.discount.value, sub);
+      else if (order.discount.type === "treat") disc = sub;
+    }
+    return { sub: sub, discount: disc, total: Math.max(0, sub - disc) };
+  }
+
+  /* ---------- genel API ---------- */
+  var Store = {
+
+    init: function () {
+      return open().then(function (d) {
+        db = d;
+        return Promise.all([all("orders"), get("meta", "settings")]);
+      }).then(function (r) {
+        orders = r[0] || [];
+        settings = (r[1] && r[1].v) || null;
+        if (!settings) {
+          settings = JSON.parse(JSON.stringify(DEFAULTS));
+          settings.tables = defaultTables();
+          return put("meta", { k: "settings", v: settings });
+        }
+        if (!settings.tables || !settings.tables.length) settings.tables = defaultTables();
+      }).then(function () { return Store; });
+    },
+
+    onChange: function (fn) { listeners.push(fn); },
+
+    settings: function () { return settings; },
+    saveSettings: function (patch) {
+      Object.assign(settings, patch);
+      return put("meta", { k: "settings", v: settings }).then(function () { broadcast("settings"); });
+    },
+
+    tables: function () { return settings.tables; },
+    zones: function () {
+      var z = [];
+      settings.tables.forEach(function (t) { if (z.indexOf(t.zone) < 0) z.push(t.zone); });
+      return z;
+    },
+    table: function (id) {
+      return settings.tables.filter(function (t) { return t.id === id; })[0];
+    },
+
+    menu: flatMenu,
+    totals: totals,
+    lineTotal: lineTotal,
+    dayStart: dayStart,
+
+    openOrders: function () {
+      return orders.filter(function (o) { return o.status === "open"; });
+    },
+
+    orderByTable: function (tableId) {
+      return orders.filter(function (o) { return o.status === "open" && o.tableId === tableId; })[0];
+    },
+
+    order: function (id) {
+      return orders.filter(function (o) { return o.id === id; })[0];
+    },
+
+    openTable: function (tableId, guests) {
+      var existing = Store.orderByTable(tableId);
+      if (existing) return Promise.resolve(existing);
+      var o = {
+        id: uid("o"),
+        tableId: tableId,
+        status: "open",
+        openedAt: Date.now(),
+        closedAt: null,
+        waiter: settings.waiter,
+        guests: guests || 2,
+        items: [],
+        discount: null,
+        payment: null
+      };
+      orders.push(o);
+      return put("orders", o).then(function () { broadcast("open"); return o; });
+    },
+
+    /* taslak satır ekle (henüz mutfağa gitmedi) */
+    addItem: function (orderId, menuItem, qty, note, priceOverride) {
+      var o = Store.order(orderId); if (!o) return Promise.reject("adisyon yok");
+      var price = (priceOverride != null) ? priceOverride : menuItem.price;
+      var same = o.items.filter(function (li) {
+        return li.status === "draft" && li.mid === menuItem.mid && (li.note || "") === (note || "");
+      })[0];
+      if (same) same.qty += (qty || 1);
+      else o.items.push({
+        lid: uid("l"), mid: menuItem.mid, name: menuItem.name, catName: menuItem.catName,
+        price: price, qty: qty || 1, note: note || "", status: "draft", sentAt: null
+      });
+      return put("orders", o).then(function () { broadcast("item"); return o; });
+    },
+
+    setQty: function (orderId, lid, qty) {
+      var o = Store.order(orderId); if (!o) return Promise.reject("adisyon yok");
+      var li = o.items.filter(function (x) { return x.lid === lid; })[0];
+      if (!li) return Promise.resolve(o);
+      if (qty <= 0) o.items = o.items.filter(function (x) { return x.lid !== lid; });
+      else li.qty = qty;
+      return put("orders", o).then(function () { broadcast("item"); return o; });
+    },
+
+    removeItem: function (orderId, lid) { return Store.setQty(orderId, lid, 0); },
+
+    sendToKitchen: function (orderId) {
+      var o = Store.order(orderId); if (!o) return Promise.reject("adisyon yok");
+      var now = Date.now(), n = 0;
+      o.items.forEach(function (li) {
+        if (li.status === "draft") { li.status = "sent"; li.sentAt = now; n++; }
+      });
+      return put("orders", o).then(function () { broadcast("kitchen"); return n; });
+    },
+
+    setItemStatus: function (orderId, lid, status) {
+      var o = Store.order(orderId); if (!o) return Promise.reject("adisyon yok");
+      var li = o.items.filter(function (x) { return x.lid === lid; })[0];
+      if (li) { li.status = status; if (status === "ready") li.readyAt = Date.now(); }
+      return put("orders", o).then(function () { broadcast("kitchen"); return o; });
+    },
+
+    markTableReady: function (orderId) {
+      var o = Store.order(orderId); if (!o) return Promise.reject("adisyon yok");
+      o.items.forEach(function (li) { if (li.status === "sent") { li.status = "ready"; li.readyAt = Date.now(); } });
+      return put("orders", o).then(function () { broadcast("kitchen"); return o; });
+    },
+
+    setDiscount: function (orderId, discount) {
+      var o = Store.order(orderId); if (!o) return Promise.reject("adisyon yok");
+      o.discount = discount;
+      return put("orders", o).then(function () { broadcast("order"); return o; });
+    },
+
+    setGuests: function (orderId, guests) {
+      var o = Store.order(orderId); if (!o) return Promise.reject("adisyon yok");
+      o.guests = guests;
+      return put("orders", o).then(function () { broadcast("order"); return o; });
+    },
+
+    closeOrder: function (orderId, payment) {
+      var o = Store.order(orderId); if (!o) return Promise.reject("adisyon yok");
+      var t = totals(o);
+      o.status = "closed";
+      o.closedAt = Date.now();
+      o.payment = payment;
+      o.totals = t;
+      return put("orders", o).then(function () { broadcast("close"); return o; });
+    },
+
+    cancelOrder: function (orderId) {
+      var o = Store.order(orderId); if (!o) return Promise.resolve();
+      orders = orders.filter(function (x) { return x.id !== orderId; });
+      return new Promise(function (res, rej) {
+        var r = tx("orders", "readwrite").delete(orderId);
+        r.onsuccess = function () { broadcast("cancel"); res(); };
+        r.onerror = function () { rej(r.error); };
+      });
+    },
+
+    /* ---------- rapor ---------- */
+    closedBetween: function (from, to) {
+      return orders.filter(function (o) {
+        return o.status === "closed" && o.closedAt >= from && o.closedAt < to;
+      });
+    },
+
+    report: function (from, to) {
+      var list = Store.closedBetween(from, to);
+      var ciro = 0, indirim = 0, kisi = 0;
+      var byHour = {}, byItem = {}, byCat = {}, byPay = {};
+      list.forEach(function (o) {
+        var t = o.totals || totals(o);
+        ciro += t.total; indirim += t.discount; kisi += (o.guests || 0);
+        var h = new Date(o.closedAt).getHours();
+        byHour[h] = (byHour[h] || 0) + t.total;
+        byPay[o.payment || "—"] = (byPay[o.payment || "—"] || 0) + t.total;
+        (o.items || []).forEach(function (li) {
+          var k = li.name;
+          if (!byItem[k]) byItem[k] = { name: li.name, catName: li.catName, qty: 0, tutar: 0 };
+          byItem[k].qty += li.qty; byItem[k].tutar += lineTotal(li);
+          if (!byCat[li.catName]) byCat[li.catName] = { name: li.catName, qty: 0, tutar: 0 };
+          byCat[li.catName].qty += li.qty; byCat[li.catName].tutar += lineTotal(li);
+        });
+      });
+      var arr = function (obj) {
+        return Object.keys(obj).map(function (k) { return obj[k]; })
+          .sort(function (a, b) { return b.tutar - a.tutar; });
+      };
+      return {
+        adisyon: list.length,
+        ciro: ciro,
+        indirim: indirim,
+        kisi: kisi,
+        masaOrt: list.length ? Math.round(ciro / list.length) : 0,
+        kisiOrt: kisi ? Math.round(ciro / kisi) : 0,
+        byHour: byHour,
+        byPay: byPay,
+        items: arr(byItem),
+        cats: arr(byCat),
+        list: list.sort(function (a, b) { return b.closedAt - a.closedAt; })
+      };
+    },
+
+    /* deneme verisi — boş ekran yerine gerçekçi bir gün */
+    seedDemo: function () {
+      var menu = flatMenu();
+      var pick = function (catId) {
+        var c = menu.filter(function (m) { return m.cat === catId && m.price; });
+        return c[Math.floor(Math.random() * c.length)];
+      };
+      var base = dayStart();
+      var writes = [];
+      for (var i = 0; i < 9; i++) {
+        var openedAt = base + (11 + Math.floor(Math.random() * 9)) * 3600000 + Math.floor(Math.random() * 3600000);
+        var closedAt = openedAt + (35 + Math.floor(Math.random() * 60)) * 60000;
+        if (closedAt > Date.now()) closedAt = Date.now() - 60000;
+        var t = settings.tables[Math.floor(Math.random() * settings.tables.length)];
+        var items = [];
+        var cats = ["kebab", "salads", "soft", "desserts", "hot", "ottoman", "pide"];
+        var n = 3 + Math.floor(Math.random() * 4);
+        for (var j = 0; j < n; j++) {
+          var m = pick(cats[Math.floor(Math.random() * cats.length)]);
+          if (!m) continue;
+          items.push({
+            lid: uid("l"), mid: m.mid, name: m.name, catName: m.catName,
+            price: m.price, qty: 1 + Math.floor(Math.random() * 2), note: "",
+            status: "ready", sentAt: openedAt + 120000
+          });
+        }
+        var o = {
+          id: uid("o"), tableId: t.id, status: "closed",
+          openedAt: openedAt, closedAt: closedAt, waiter: settings.waiter,
+          guests: 2 + Math.floor(Math.random() * 3), items: items,
+          discount: null, payment: Math.random() < 0.65 ? "kart" : "nakit"
+        };
+        o.totals = totals(o);
+        orders.push(o);
+        writes.push(put("orders", o));
+      }
+      return Promise.all(writes).then(function () { broadcast("seed"); });
+    },
+
+    wipe: function () {
+      orders = [];
+      return new Promise(function (res, rej) {
+        var r = tx("orders", "readwrite").clear();
+        r.onsuccess = function () { broadcast("wipe"); res(); };
+        r.onerror = function () { rej(r.error); };
+      });
+    }
+  };
+
+  window.Store = Store;
+})();
