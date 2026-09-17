@@ -1,0 +1,305 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sessiz Salon</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Outfit:wght@200;300;400&display=swap">
+<style>
+:root{
+  --void:#08090A; --void-2:#0E0F11; --panel:#121316;
+  --text:#F2EFE8; --text-2:#A8A59D; --muted:#6C6A64;
+  --gold:#C8B288; --gold-dk:#8A7852; --hair:#1B1C1F;
+  --display:"Bodoni Moda",Didot,Georgia,serif;
+  --body:"Outfit",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--void);color:var(--text);font-family:var(--body);font-weight:300;font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3{margin:0;font-family:var(--display);font-weight:400;text-wrap:balance;line-height:1.08}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+a{color:inherit}
+:focus-visible{outline:1px solid var(--gold);outline-offset:5px}
+[hidden]{display:none!important}
+.col{max-width:540px;margin:0 auto;padding-inline:24px}
+.tiny{font-size:9.5px;letter-spacing:.34em;text-transform:uppercase;color:var(--muted);text-indent:.34em}
+
+/* ---------- logo ---------- */
+.lk{display:block;text-align:center;line-height:1}
+.lk-orn{display:block;color:var(--gold-dk)}
+.lk-word{display:flex;align-items:flex-start;justify-content:center;gap:6px;margin-top:16px}
+.lk-main{font-family:var(--display);font-weight:400;font-size:3em;letter-spacing:.02em;color:var(--text)}
+.lk-stack{display:flex;flex-direction:column;gap:3px;padding-top:.42em}
+.lk-stack i{font-style:normal;font-family:var(--display);font-size:.7em;letter-spacing:.12em;color:var(--text-2)}
+.lk-since{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:20px;font-size:.5em;letter-spacing:.4em;color:var(--gold);font-weight:300}
+.lk-since i{display:block;width:30px;height:1px;background:var(--gold-dk)}
+.lk-sub{display:block;margin-top:14px;font-size:.46em;letter-spacing:.34em;color:var(--muted);font-weight:300}
+
+/* ---------- üst ---------- */
+.top{position:fixed;top:0;left:0;right:0;z-index:40;background:linear-gradient(180deg,rgba(8,9,10,.97) 60%,transparent)}
+.top-in{display:flex;align-items:center;gap:16px;max-width:540px;margin:0 auto;padding:16px 24px}
+.top .cr{color:var(--gold-dk);display:flex;flex:none}
+.top .tt{flex:1;font-family:var(--display);font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.langs{display:flex;gap:16px;flex:none}
+.langs button{font-size:9.5px;letter-spacing:.22em;color:var(--muted);padding:8px 0;min-height:30px}
+.langs button[aria-pressed=true]{color:var(--gold)}
+
+/* ---------- sol dikey ray (geniş ekran) ---------- */
+.spine{display:none}
+@media(min-width:1000px){
+  .spine{
+    display:block;position:fixed;inset-inline-start:34px;top:0;bottom:0;z-index:30;
+    width:34px;padding-block:96px 40px;overflow:hidden;
+  }
+  .spine ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:22px;
+    writing-mode:vertical-rl;height:100%;flex-wrap:wrap}
+  .spine button{font-size:9.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--muted);white-space:nowrap;padding:0}
+  .spine button[aria-current=true]{color:var(--gold)}
+}
+
+/* ---------- kapak ---------- */
+.overture{padding-block:130px 0;text-align:center}
+.overture .lk{font-size:clamp(14px,4vw,20px);animation:fade 1s ease backwards}
+.overture .hair{width:1px;height:76px;background:linear-gradient(180deg,var(--gold-dk),transparent);margin:46px auto 0}
+.overture .facts{margin-top:40px;display:grid;gap:11px;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);animation:fade 1s .18s ease backwards}
+.overture .facts b{color:var(--gold);font-weight:300;font-variant-numeric:tabular-nums}
+@keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.overture .lk,.overture .facts{animation:none}}
+
+/* ---------- arama ---------- */
+.seek{display:flex;align-items:center;gap:14px;margin-top:64px;border-bottom:1px solid var(--hair);padding-bottom:12px}
+.seek svg{color:var(--muted);flex:none}
+.seek input{flex:1;background:none;border:0;font:inherit;font-size:15px;font-weight:300;letter-spacing:.06em;color:var(--text);padding:4px 0;min-width:0}
+.seek input::placeholder{color:var(--muted);font-size:11px;letter-spacing:.24em;text-transform:uppercase}
+.seek .clr{color:var(--muted);font-size:17px;line-height:1;width:24px;height:24px}
+.seek .clr[hidden]{display:none}
+
+/* ---------- bölüm ---------- */
+.chapter{padding-block:96px 0;scroll-margin-top:80px}
+.chapter-h{text-align:center}
+.chapter-h .no{font-family:var(--display);font-size:11px;letter-spacing:.3em;color:var(--gold-dk);font-variant-numeric:tabular-nums}
+.chapter-h h2{font-size:clamp(34px,10vw,52px);margin-top:16px;letter-spacing:.005em}
+.chapter-h .ct{margin-top:18px;font-size:9.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.chapter-h .hair{width:34px;height:1px;background:var(--gold-dk);margin:30px auto 0}
+
+.item{display:block;width:100%;text-align:start;padding:26px 0;border-bottom:1px solid var(--hair)}
+.item:last-child{border-bottom:0}
+.item .top-line{display:flex;align-items:baseline;gap:16px}
+.item .nm{font-family:var(--display);font-size:23px;line-height:1.24;flex:1;color:var(--text);letter-spacing:.005em}
+.item .pr{font-size:13px;font-weight:200;letter-spacing:.12em;color:var(--gold);font-variant-numeric:tabular-nums;white-space:nowrap}
+.item .pr.ask{font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--gold-dk)}
+.item .ds{margin:10px 0 0;font-size:13.5px;color:var(--text-2);line-height:1.7;max-width:44ch;font-weight:200}
+.item .bs{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:14px;align-items:center}
+.item:hover .nm{color:#fff}
+.item:hover .pr{color:#E3D2AE}
+.bdg{font-size:9px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
+.bdg.chef{color:var(--gold)}
+.bdg.hot{color:#B98668}
+.kcal{font-size:9px;letter-spacing:.2em;color:var(--muted);font-variant-numeric:tabular-nums}
+.empty{padding:100px 0;text-align:center;color:var(--muted);font-size:10px;letter-spacing:.34em;text-transform:uppercase}
+
+/* ---------- alt ---------- */
+.foot{margin-top:120px;border-top:1px solid var(--hair);padding-block:80px 90px;text-align:center}
+.foot .cr{color:var(--gold-dk);display:block}
+.foot h3{font-size:24px;margin-top:22px}
+.rows{display:grid;gap:26px;margin-top:44px}
+.rows p{margin:0;font-size:14px;color:var(--text-2);line-height:1.9;font-weight:200}
+.rows b{display:block;font-size:9px;font-weight:300;letter-spacing:.34em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.acts{display:grid;gap:1px;max-width:320px;margin:50px auto 0;background:var(--hair)}
+.acts a{display:flex;align-items:center;justify-content:center;min-height:58px;background:var(--void);color:var(--text);text-decoration:none;font-size:10px;letter-spacing:.3em;text-transform:uppercase;transition:background .3s,color .3s}
+.acts a:hover{background:var(--panel);color:var(--gold)}
+.acts a.solid{background:var(--gold);color:#17130B}
+.acts a.solid:hover{background:#DCC79E;color:#17130B}
+.note{margin-top:56px;font-size:9.5px;color:var(--muted);line-height:2;letter-spacing:.1em}
+
+/* ---------- detay ---------- */
+.sheet{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center}
+@media(min-width:640px){.sheet{align-items:center}}
+.sheet .bd{position:absolute;inset:0;background:rgba(4,4,5,.86)}
+.card{position:relative;width:100%;max-width:460px;max-height:88vh;overflow-y:auto;background:var(--void-2);padding:52px 32px 46px;text-align:center;border-top:1px solid var(--gold-dk)}
+@media(min-width:640px){.card{border:1px solid var(--hair);border-top:1px solid var(--gold-dk)}}
+.card .x{position:absolute;inset-inline-end:18px;top:18px;width:34px;height:34px;color:var(--muted);font-size:16px;line-height:1}
+.card h3{font-size:31px;margin:16px 0 0;letter-spacing:.01em}
+.card .ds{color:var(--text-2);font-size:14px;margin-top:18px;line-height:1.85;font-weight:200}
+.card .hair{width:26px;height:1px;background:var(--gold-dk);margin:34px auto}
+.meta{display:grid;gap:26px}
+.meta span{display:block;font-size:9px;letter-spacing:.32em;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
+.meta b{font-family:var(--display);font-size:30px;font-weight:400;color:var(--gold);font-variant-numeric:tabular-nums}
+.meta b.al{font-family:var(--body);font-size:13.5px;font-weight:200;color:var(--text-2);letter-spacing:.05em}
+.warn{margin-top:40px;font-size:9px;color:var(--muted);line-height:2;letter-spacing:.1em}
+</style>
+
+<header class="top"><div class="top-in">
+  <span class="cr" id="topCrest"></span>
+  <span class="tt">Osman Gourmet</span>
+  <nav class="langs" id="langs" aria-label="Language"></nav>
+</div></header>
+
+<aside class="spine"><ol id="spine"></ol></aside>
+
+<main class="col">
+  <section class="overture">
+    <div id="logo"></div>
+    <div class="hair"></div>
+    <div class="facts">
+      <span><b>★ 4,7</b> &nbsp;·&nbsp; 1.250 <span id="rv"></span></span>
+      <span id="hrs"></span>
+      <span id="dist"></span>
+    </div>
+  </section>
+
+  <label class="seek">
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input id="q" type="search" autocomplete="off" aria-label="Search">
+    <button class="clr" id="clr" type="button" hidden aria-label="Clear">×</button>
+  </label>
+
+  <div id="list"></div>
+
+  <footer class="foot">
+    <span class="cr" id="footCrest"></span>
+    <h3>Osman Gourmet Beydağı</h3>
+    <div class="rows">
+      <p><b id="lAdr"></b>Binbirdirek, Klodfarer Cd. No:27/B<br>34122 Fatih · İstanbul</p>
+      <p><b id="lTel"></b>(0212) 638 34 44</p>
+      <p><b id="lHrs"></b><span id="hrs2"></span></p>
+    </div>
+    <div class="acts" id="acts"></div>
+    <p class="note" id="footnote"></p>
+  </footer>
+</main>
+
+<div class="sheet" id="sheet" hidden>
+  <div class="bd" data-close></div>
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="shName">
+    <button class="x" data-close aria-label="Close">×</button>
+    <p class="tiny" id="shCat"></p>
+    <h3 id="shName"></h3>
+    <p class="ds" id="shDesc"></p>
+    <div class="hair"></div>
+    <div class="meta" id="shMeta"></div>
+    <p class="warn" id="shWarn"></p>
+  </div>
+</div>
+
+<script src="menu-data.js"></script>
+<script src="core.js"></script>
+<script src="brand.js"></script>
+<script>
+(function(){
+  Q.init();
+  var V=window.VENUE, filter="", current=window.MENU[0].id;
+  var R=["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII","XIII","XIV","XV","XVI","XVII"];
+
+  document.getElementById("topCrest").innerHTML=Brand.crest(20);
+  document.getElementById("footCrest").innerHTML=Brand.crest(34);
+  document.getElementById("logo").innerHTML=Brand.lockup({crest:62});
+
+  var lw=document.getElementById("langs");
+  window.LANGS.forEach(function(l){
+    var b=document.createElement("button");
+    b.type="button"; b.textContent=l.short; b.setAttribute("lang",l.code);
+    b.onclick=function(){Q.setLang(l.code)};
+    lw.appendChild(b);
+  });
+
+  function spine(){
+    var o=document.getElementById("spine"); o.innerHTML="";
+    window.MENU.forEach(function(cat){
+      var li=document.createElement("li");
+      var b=document.createElement("button");
+      b.type="button"; b.textContent=Q.L(cat.n);
+      b.setAttribute("aria-current", cat.id===current);
+      b.onclick=function(){
+        var el=document.getElementById("ch-"+cat.id);
+        if(el) el.scrollIntoView({behavior:"smooth",block:"start"});
+      };
+      li.appendChild(b); o.appendChild(li);
+    });
+  }
+
+  function render(){
+    var data=Q.search(filter), out="";
+    if(!data.length) out='<p class="empty">'+Q.esc(Q.t("empty"))+'</p>';
+    data.forEach(function(cat){
+      var n=window.MENU.map(function(c){return c.id}).indexOf(cat.id)+1;
+      out+='<section class="chapter" id="ch-'+cat.id+'"><div class="chapter-h">'+
+        '<p class="no">'+R[n]+'</p><h2>'+Q.esc(Q.L(cat.n))+'</h2>'+
+        '<p class="ct">'+cat.items.length+' '+Q.esc(Q.t("items"))+'</p>'+
+        '<div class="hair"></div></div>';
+      cat.items.forEach(function(it){
+        var bs="";
+        (it.t||[]).forEach(function(tg){
+          var cls=tg==="chef"?" chef":(tg==="spicy"?" hot":"");
+          bs+='<span class="bdg'+cls+'">'+Q.esc(Q.tag(tg))+'</span>';
+        });
+        if(it.k) bs+='<span class="kcal">'+it.k+' '+Q.esc(Q.t("kcal"))+'</span>';
+        out+='<button class="item" type="button" data-id="'+it._id+'">'+
+          '<span class="top-line"><span class="nm">'+Q.esc(Q.L(it.i))+'</span>'+
+          '<span class="pr'+(it.p===null?' ask':'')+'">'+Q.esc(Q.price(it.p))+'</span></span>'+
+          (it.d?'<span class="ds">'+Q.esc(Q.L(it.d))+'</span>':'')+
+          (bs?'<span class="bs">'+bs+'</span>':'')+'</button>';
+      });
+      out+='</section>';
+    });
+    document.getElementById("list").innerHTML=out;
+    observe();
+  }
+
+  function texts(){
+    document.getElementById("rv").textContent=Q.t("reviews");
+    document.getElementById("hrs").textContent=Q.L(V.hours);
+    document.getElementById("hrs2").textContent=Q.L(V.hours);
+    document.getElementById("dist").textContent=Q.L(V.district);
+    document.getElementById("q").placeholder=Q.t("search");
+    document.getElementById("lAdr").textContent=Q.t("address");
+    document.getElementById("lTel").textContent=Q.t("phone");
+    document.getElementById("lHrs").textContent=Q.t("hours");
+    document.getElementById("footnote").textContent=Q.t("calNote")+" "+Q.t("allergenNote");
+    document.getElementById("acts").innerHTML=
+      '<a class="solid" href="tel:'+V.phone.replace(/\s/g,"")+'">'+Q.esc(Q.t("call"))+'</a>'+
+      '<a href="'+V.directions+'" target="_blank" rel="noopener">'+Q.esc(Q.t("directions"))+'</a>'+
+      '<a href="https://wa.me/'+V.whatsapp+'" target="_blank" rel="noopener">'+Q.esc(Q.t("whatsapp"))+'</a>'+
+      '<a href="'+V.reservation+'" target="_blank" rel="noopener">'+Q.esc(Q.t("reserve"))+'</a>';
+    Array.prototype.forEach.call(lw.children,function(b,i){
+      b.setAttribute("aria-pressed", window.LANGS[i].code===Q.lang);
+    });
+  }
+
+  var sheet=document.getElementById("sheet");
+  function open(id){
+    var it=Q.find(id); if(!it) return;
+    document.getElementById("shCat").textContent=Q.L(it._cat.n);
+    document.getElementById("shName").textContent=Q.L(it.i);
+    var d=document.getElementById("shDesc");
+    d.textContent=it.d?Q.L(it.d):""; d.style.display=it.d?"":"none";
+    var al=(it.a&&it.a.length)?it.a.map(Q.allergen).join(" · "):Q.t("noAllergen");
+    var m='<div><span>'+Q.esc(Q.t("menu"))+'</span><b>'+Q.esc(Q.price(it.p))+'</b></div>';
+    if(it.k) m+='<div><span>'+Q.esc(Q.t("kcal"))+' · '+Q.esc(Q.t("approx"))+'</span><b>'+it.k+'</b></div>';
+    m+='<div><span>'+Q.esc(Q.t("allergens"))+'</span><b class="al">'+Q.esc(al)+'</b></div>';
+    document.getElementById("shMeta").innerHTML=m;
+    document.getElementById("shWarn").textContent=Q.t("calNote")+" "+Q.t("allergenNote");
+    sheet.hidden=false; document.body.style.overflow="hidden";
+    sheet.querySelector(".x").focus();
+  }
+  function close(){ sheet.hidden=true; document.body.style.overflow=""; }
+  sheet.addEventListener("click",function(e){ if(e.target.closest("[data-close]")) close(); });
+  document.addEventListener("keydown",function(e){ if(e.key==="Escape"&&!sheet.hidden) close(); });
+  document.getElementById("list").addEventListener("click",function(e){
+    var b=e.target.closest(".item"); if(b) open(b.dataset.id);
+  });
+  var qi=document.getElementById("q"), clr=document.getElementById("clr");
+  qi.addEventListener("input",function(e){ filter=e.target.value; clr.hidden=!filter; render(); });
+  clr.addEventListener("click",function(){ qi.value=""; filter=""; clr.hidden=true; render(); qi.focus(); });
+
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      if(e.isIntersecting && !filter){
+        var id=e.target.id.replace("ch-","");
+        if(id!==current){ current=id; spine(); }
+      }
+    });
+  },{rootMargin:"-90px 0px -72% 0px"});
+  function observe(){ document.querySelectorAll(".chapter").forEach(function(s){io.observe(s)}); }
+
+  Q.onLang(function(){ texts(); spine(); render(); });
+  texts(); spine(); render();
+})();
+</script>

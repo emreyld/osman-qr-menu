@@ -1,0 +1,373 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kilim Dokuma</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Karla:wght@300;400;500;600;700&family=Zilla+Slab:wght@500;600;700&display=swap">
+<style>
+:root{
+  --madder:#9C2B22; --madder-dk:#6E1A14; --madder-lt:#C0453A;
+  --indigo:#23355F; --indigo-dk:#152040; --indigo-lt:#3E5488;
+  --saffron:#D39A28; --saffron-dk:#9C6E14;
+  --cream:#F3E7CE; --cream-2:#EADCBE; --cream-3:#DFCDA6;
+  --walnut:#2C1E15; --walnut-2:#4E3A2A; --muted:#7E6A55;
+  --display:"Zilla Slab",Georgia,serif;
+  --body:"Karla",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --selv:22px;
+}
+@media(min-width:520px){:root{--selv:34px}}
+*{box-sizing:border-box}
+body{
+  margin:0;color:var(--walnut);background:var(--cream);
+  font-family:var(--body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;
+  padding-inline:var(--selv);
+}
+h1,h2,h3{margin:0;font-family:var(--display);font-weight:700;text-wrap:balance;line-height:1.18}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--indigo);outline-offset:3px}
+[hidden]{display:none!important}
+.loom{max-width:660px;margin:0 auto;padding-inline:14px}
+
+/* ---------- dokuma kenar (sol/sağ saçak) ---------- */
+.selvedge{
+  position:fixed;top:0;bottom:0;width:var(--selv);z-index:20;
+  background-color:var(--madder);
+  background-image:
+    repeating-linear-gradient(90deg,rgba(0,0,0,.2) 0 1px,transparent 1px 4px),
+    repeating-linear-gradient(90deg,transparent 0 5px,rgba(243,231,206,.55) 5px 7px,transparent 7px 15px),
+    repeating-linear-gradient(180deg,
+      var(--indigo) 0 18px, var(--madder) 18px 40px,
+      var(--saffron) 40px 47px, var(--cream) 47px 52px,
+      var(--madder) 52px 74px, var(--indigo) 74px 92px,
+      var(--cream) 92px 97px, var(--saffron) 97px 104px);
+  box-shadow:inset 0 0 0 1px rgba(44,30,21,.4);
+}
+.selvedge.l{inset-inline-start:0}
+.selvedge.r{inset-inline-end:0}
+
+/* ---------- logo ---------- */
+.lk{display:block;text-align:center;line-height:1}
+.lk-orn{display:block;color:var(--saffron)}
+.lk-word{display:flex;align-items:flex-start;justify-content:center;gap:5px;margin-top:8px}
+.lk-main{font-family:var(--display);font-weight:700;font-size:2.4em;letter-spacing:-.005em;color:var(--cream)}
+.lk-stack{display:flex;flex-direction:column;gap:1px;padding-top:.34em}
+.lk-stack i{font-style:normal;font-size:.62em;font-weight:700;letter-spacing:.07em;color:var(--cream)}
+.lk-since{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;font-size:.55em;letter-spacing:.24em;color:var(--saffron);font-weight:700}
+.lk-since i{display:block;width:22px;height:2px;background:var(--saffron)}
+.lk-sub{display:block;margin-top:8px;font-size:.52em;letter-spacing:.22em;color:#E4C79A;font-weight:600}
+.lk.dark .lk-main,.lk.dark .lk-stack i{color:var(--walnut)}
+.lk.dark .lk-orn{color:var(--madder)}
+.lk.dark .lk-since{color:var(--madder)}
+.lk.dark .lk-since i{background:var(--madder)}
+.lk.dark .lk-sub{color:var(--muted)}
+
+/* ---------- üst ---------- */
+.top{position:sticky;top:0;z-index:30;background:var(--walnut)}
+.top-in{display:flex;align-items:center;gap:11px;max-width:660px;margin:0 auto;padding:9px 14px}
+.top .cr{color:var(--saffron);display:flex;flex:none}
+.top .tt{flex:1;font-family:var(--display);font-weight:600;font-size:15px;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.langs{display:flex;gap:2px;flex:none}
+.langs button{width:32px;height:30px;font-size:10.5px;font-weight:700;color:#B9A183}
+.langs button[aria-pressed=true]{background:var(--saffron);color:var(--walnut)}
+.top .band{color:var(--saffron)}
+
+/* ---------- madalyon ---------- */
+.medallion{position:relative;background:var(--indigo);padding-block:36px 30px;overflow:hidden}
+.medallion .field{
+  position:absolute;inset:0;opacity:.3;pointer-events:none;
+  background-image:
+    repeating-linear-gradient(45deg,rgba(211,154,40,.5) 0 2px,transparent 2px 16px),
+    repeating-linear-gradient(-45deg,rgba(243,231,206,.35) 0 2px,transparent 2px 16px);
+}
+.diamond{
+  position:relative;width:min(84%,400px);margin:0 auto;padding:30px 22px;text-align:center;
+  background:var(--madder);
+  clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);
+  display:none;
+}
+.medal-in{position:relative;text-align:center;padding-inline:12px}
+.medal-in .frame{
+  position:relative;display:inline-block;padding:26px 30px;
+  border:3px solid var(--saffron);outline:1px solid var(--saffron);outline-offset:5px;
+  background:rgba(21,32,64,.55);
+  animation:weave .6s ease backwards;
+}
+@keyframes weave{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.medal-in .frame{animation:none}}
+.medal-in .frame::before,.medal-in .frame::after{
+  content:"";position:absolute;top:50%;width:40px;height:2px;background:var(--saffron);
+}
+.medal-in .frame::before{inset-inline-start:-46px}
+.medal-in .frame::after{inset-inline-end:-46px}
+.medal-in .lk{font-size:clamp(13px,3.5vw,17px)}
+.medal-in .facts{display:flex;justify-content:center;flex-wrap:wrap;gap:6px 16px;margin-top:22px;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:#C7D2EA;position:relative}
+.medal-in .facts b{color:var(--saffron);font-weight:700}
+.hooks{display:flex;justify-content:center;gap:16px;margin-top:20px;color:var(--saffron);opacity:.75;position:relative}
+
+/* ---------- gezinme ---------- */
+.nav{position:sticky;top:50px;z-index:25;background:var(--cream);padding-block:12px 0;border-bottom:3px solid var(--walnut)}
+.seek{display:flex;align-items:center;gap:10px;border:2px solid var(--walnut);background:#fff;padding:0 12px}
+.seek svg{color:var(--madder);flex:none}
+.seek input{flex:1;background:none;border:0;font:inherit;font-weight:500;font-size:15.5px;color:var(--walnut);padding:11px 0;min-width:0}
+.seek input::placeholder{color:var(--muted);font-weight:400}
+.seek .clr{color:var(--muted);font-size:18px;line-height:1;width:26px;height:26px}
+.seek .clr[hidden]{display:none}
+.tabs{display:flex;gap:5px;overflow-x:auto;padding-block:10px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:none;padding:6px 12px;font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--indigo);border:2px solid var(--indigo);white-space:nowrap;min-height:32px}
+.tabs button[aria-pressed=true]{background:var(--indigo);color:var(--cream)}
+
+/* ---------- kategori bandı ---------- */
+.row-cat{scroll-margin-top:132px;margin-top:30px}
+.warp{background:var(--madder);color:var(--cream);padding-block:14px;position:relative;overflow:hidden}
+.warp .tex{position:absolute;inset:0;opacity:.35;pointer-events:none;
+  background-image:repeating-linear-gradient(90deg,rgba(0,0,0,.25) 0 1px,transparent 1px 5px)}
+.warp .in{position:relative;display:flex;align-items:center;gap:12px;max-width:660px;margin:0 auto;padding-inline:14px}
+.warp .mk{flex:none;color:var(--saffron)}
+.warp h2{flex:1;font-size:clamp(19px,5vw,25px);letter-spacing:.01em}
+.warp .n{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#F0C88A}
+.row-cat:nth-of-type(even) .warp{background:var(--indigo)}
+.row-cat:nth-of-type(even) .warp .n{color:#A9BCE4}
+
+.weave{background:var(--cream);padding-block:4px 0}
+.item{
+  display:grid;grid-template-columns:auto 1fr auto;gap:2px 11px;width:100%;text-align:start;
+  padding:13px 0;border-bottom:1px dashed var(--cream-3);
+}
+.item:last-child{border-bottom:0}
+.item .dm{grid-row:1/span 3;width:9px;height:9px;background:var(--saffron);transform:rotate(45deg);margin-top:8px;flex:none;box-shadow:0 0 0 1px var(--saffron-dk)}
+.item .nm{font-family:var(--display);font-weight:600;font-size:17.5px;line-height:1.28;color:var(--walnut)}
+.item .pr{grid-row:1;grid-column:3;font-family:var(--display);font-weight:700;font-size:16px;color:var(--madder);font-variant-numeric:tabular-nums;white-space:nowrap}
+.item .pr.ask{font-family:var(--body);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--saffron-dk);padding-top:4px}
+.item .ds{grid-column:2;font-size:13.5px;color:var(--muted);line-height:1.5;max-width:48ch;margin-top:2px}
+.item .bs{grid-column:2;display:flex;flex-wrap:wrap;gap:5px 9px;margin-top:8px;align-items:center}
+.item:hover{background:var(--cream-2)}
+.bdg{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--indigo);border:1.5px solid var(--indigo);padding:1.5px 6px}
+.bdg.hot{color:var(--madder);border-color:var(--madder)}
+.bdg.chef{color:var(--saffron-dk);border-color:var(--saffron-dk)}
+.kcal{font-size:11px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+.empty{padding:60px 0;text-align:center;color:var(--muted);font-weight:600;letter-spacing:.06em}
+
+/* ---------- alt ---------- */
+.foot{margin-top:34px;background:var(--walnut);color:var(--cream);padding-bottom:36px}
+.foot .band{color:var(--saffron)}
+.foot h3{text-align:center;font-size:21px;color:var(--saffron);padding-top:26px}
+.rows{display:grid;gap:13px;margin-top:18px;text-align:center}
+.rows p{margin:2px 0 0;font-size:14.5px;color:#DCC9AC;line-height:1.5}
+.rows b{display:block;font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#9E8768}
+.acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:22px}
+.acts a{display:flex;align-items:center;justify-content:center;min-height:50px;border:2px solid var(--saffron);color:var(--saffron);text-decoration:none;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;text-align:center;padding:0 8px}
+.acts a:hover{background:rgba(211,154,40,.16)}
+.acts a.solid{background:var(--madder);border-color:var(--madder);color:var(--cream)}
+.acts a.solid:hover{background:var(--madder-lt);border-color:var(--madder-lt)}
+.note{margin-top:20px;font-size:11px;color:#9E8768;line-height:1.7;text-align:center}
+
+/* ---------- detay ---------- */
+.sheet{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center}
+@media(min-width:640px){.sheet{align-items:center}}
+.sheet .bd{position:absolute;inset:0;background:rgba(28,19,13,.74)}
+.card{position:relative;width:100%;max-width:490px;max-height:88vh;overflow-y:auto;background:var(--cream);border:3px solid var(--walnut);border-bottom:0;padding:0 0 26px;text-align:center}
+@media(min-width:640px){.card{border-bottom:3px solid var(--walnut)}}
+.card .x{position:absolute;inset-inline-end:12px;top:12px;width:34px;height:34px;background:var(--walnut);color:var(--cream);font-size:17px;line-height:1;z-index:2}
+.card .pad{padding:24px 22px 0}
+.card .ct{font-size:10.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--madder)}
+.card h3{font-size:26px;margin:10px 0 0}
+.card .ds{color:var(--muted);font-size:14.5px;margin-top:12px;line-height:1.6}
+.card .dm{display:flex;justify-content:center;gap:9px;margin:20px 0 6px;color:var(--saffron)}
+.card .dm i{width:10px;height:10px;background:currentColor;transform:rotate(45deg);display:block}
+.meta{display:grid;gap:16px}
+.meta span{display:block;font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.meta b{font-family:var(--display);font-weight:700;font-size:26px;color:var(--madder);font-variant-numeric:tabular-nums}
+.meta b.al{font-family:var(--body);font-size:14.5px;font-weight:600;color:var(--walnut-2)}
+.warn{margin-top:22px;font-size:11px;color:var(--muted);line-height:1.7;padding-inline:22px}
+</style>
+
+<div class="selvedge l" aria-hidden="true"></div>
+<div class="selvedge r" aria-hidden="true"></div>
+
+<header class="top">
+  <div class="top-in">
+    <span class="cr" id="topCrest"></span>
+    <span class="tt">Osman Gourmet Beydağı</span>
+    <nav class="langs" id="langs" aria-label="Language"></nav>
+  </div>
+  <div id="topBand"></div>
+</header>
+
+<section class="medallion">
+  <span class="field" aria-hidden="true"></span>
+  <div class="medal-in">
+    <span class="frame"><span id="logo"></span></span>
+    <div class="facts">
+      <span><b>★ 4,7</b> · 1.250 <span id="rv"></span></span>
+      <span id="hrs"></span>
+      <span><b>Since 2008</b></span>
+    </div>
+    <div class="hooks" id="hooks"></div>
+  </div>
+</section>
+
+<div class="nav"><div class="loom">
+  <label class="seek">
+    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input id="q" type="search" autocomplete="off" aria-label="Search">
+    <button class="clr" id="clr" type="button" hidden aria-label="Clear">×</button>
+  </label>
+  <nav class="tabs" id="tabs" aria-label="Categories"></nav>
+</div></div>
+
+<main id="list"></main>
+
+<footer class="foot">
+  <div id="footBand"></div>
+  <div class="loom">
+    <h3 id="infoT"></h3>
+    <div class="rows">
+      <p><b id="lAdr"></b>Binbirdirek, Klodfarer Cd. No:27/B<br>34122 Fatih · İstanbul</p>
+      <p><b id="lTel"></b>(0212) 638 34 44</p>
+      <p><b id="lHrs"></b><span id="hrs2"></span></p>
+    </div>
+    <div class="acts" id="acts"></div>
+    <p class="note" id="footnote"></p>
+  </div>
+</footer>
+
+<div class="sheet" id="sheet" hidden>
+  <div class="bd" data-close></div>
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="shName">
+    <button class="x" data-close aria-label="Close">×</button>
+    <div id="shBand"></div>
+    <div class="pad">
+      <p class="ct" id="shCat"></p>
+      <h3 id="shName"></h3>
+      <p class="ds" id="shDesc"></p>
+      <div class="dm"><i></i><i></i><i></i></div>
+      <div class="meta" id="shMeta"></div>
+    </div>
+    <p class="warn" id="shWarn"></p>
+  </div>
+</div>
+
+<script src="menu-data.js"></script>
+<script src="core.js"></script>
+<script src="brand.js"></script>
+<script>
+(function(){
+  Q.init();
+  var V=window.VENUE, filter="", active="";
+
+  document.getElementById("topCrest").innerHTML=Brand.crest(22);
+  document.getElementById("topBand").innerHTML=Brand.band("kilim",14,"band");
+  document.getElementById("footBand").innerHTML=Brand.band("kilim",18,"band");
+  document.getElementById("shBand").innerHTML=Brand.band("kilim",14,"band");
+  document.getElementById("logo").innerHTML=Brand.lockup({crest:44});
+  document.getElementById("hooks").innerHTML=
+    Brand.motif("horn",26)+Brand.motif("eli",26)+Brand.motif("horn",26);
+
+  var lw=document.getElementById("langs");
+  window.LANGS.forEach(function(l){
+    var b=document.createElement("button");
+    b.type="button"; b.textContent=l.short; b.setAttribute("lang",l.code);
+    b.onclick=function(){Q.setLang(l.code)};
+    lw.appendChild(b);
+  });
+
+  function tabs(){
+    var c=document.getElementById("tabs"); c.innerHTML="";
+    var a=document.createElement("button");
+    a.type="button"; a.textContent=Q.t("all"); a.setAttribute("aria-pressed",active==="");
+    a.onclick=function(){active="";tabs();render();window.scrollTo({top:0,behavior:"smooth"})};
+    c.appendChild(a);
+    window.MENU.forEach(function(cat){
+      var b=document.createElement("button");
+      b.type="button"; b.textContent=Q.L(cat.n); b.setAttribute("aria-pressed",active===cat.id);
+      b.onclick=function(){
+        active=(active===cat.id?"":cat.id); tabs(); render();
+        var el=document.getElementById("k-"+cat.id);
+        if(el) el.scrollIntoView({behavior:"smooth",block:"start"});
+      };
+      c.appendChild(b);
+    });
+  }
+
+  function render(){
+    var data=Q.search(filter);
+    if(active) data=data.filter(function(c){return c.id===active});
+    var out="";
+    if(!data.length) out='<p class="empty">'+Q.esc(Q.t("empty"))+'</p>';
+    data.forEach(function(cat){
+      out+='<section class="row-cat" id="k-'+cat.id+'">'+
+        '<div class="warp"><span class="tex"></span><div class="in">'+
+        '<span class="mk">'+Brand.motif("eli",22)+'</span>'+
+        '<h2>'+Q.esc(Q.L(cat.n))+'</h2>'+
+        '<span class="n">'+cat.items.length+'</span></div></div>'+
+        '<div class="weave"><div class="loom">';
+      cat.items.forEach(function(it){
+        var bs="";
+        (it.t||[]).forEach(function(tg){
+          var cls=tg==="spicy"?" hot":(tg==="chef"?" chef":"");
+          bs+='<span class="bdg'+cls+'">'+Q.esc(Q.tag(tg))+'</span>';
+        });
+        if(it.k) bs+='<span class="kcal">~'+it.k+' '+Q.esc(Q.t("kcal"))+'</span>';
+        out+='<button class="item" type="button" data-id="'+it._id+'">'+
+          '<span class="dm"></span>'+
+          '<span class="nm">'+Q.esc(Q.L(it.i))+'</span>'+
+          '<span class="pr'+(it.p===null?' ask':'')+'">'+Q.esc(Q.price(it.p))+'</span>'+
+          (it.d?'<span class="ds">'+Q.esc(Q.L(it.d))+'</span>':'')+
+          (bs?'<span class="bs">'+bs+'</span>':'')+'</button>';
+      });
+      out+='</div></div></section>';
+    });
+    document.getElementById("list").innerHTML=out;
+  }
+
+  function texts(){
+    document.getElementById("rv").textContent=Q.t("reviews");
+    document.getElementById("hrs").textContent=Q.L(V.hours);
+    document.getElementById("hrs2").textContent=Q.L(V.hours);
+    document.getElementById("q").placeholder=Q.t("search");
+    document.getElementById("infoT").textContent=Q.t("info");
+    document.getElementById("lAdr").textContent=Q.t("address");
+    document.getElementById("lTel").textContent=Q.t("phone");
+    document.getElementById("lHrs").textContent=Q.t("hours");
+    document.getElementById("footnote").textContent=Q.t("calNote")+" "+Q.t("allergenNote");
+    document.getElementById("acts").innerHTML=
+      '<a class="solid" href="tel:'+V.phone.replace(/\s/g,"")+'">'+Q.esc(Q.t("call"))+'</a>'+
+      '<a href="'+V.directions+'" target="_blank" rel="noopener">'+Q.esc(Q.t("directions"))+'</a>'+
+      '<a href="https://wa.me/'+V.whatsapp+'" target="_blank" rel="noopener">'+Q.esc(Q.t("whatsapp"))+'</a>'+
+      '<a href="'+V.reservation+'" target="_blank" rel="noopener">'+Q.esc(Q.t("reserve"))+'</a>';
+    Array.prototype.forEach.call(lw.children,function(b,i){
+      b.setAttribute("aria-pressed", window.LANGS[i].code===Q.lang);
+    });
+  }
+
+  var sheet=document.getElementById("sheet");
+  function open(id){
+    var it=Q.find(id); if(!it) return;
+    document.getElementById("shCat").textContent=Q.L(it._cat.n);
+    document.getElementById("shName").textContent=Q.L(it.i);
+    var d=document.getElementById("shDesc");
+    d.textContent=it.d?Q.L(it.d):""; d.style.display=it.d?"":"none";
+    var al=(it.a&&it.a.length)?it.a.map(Q.allergen).join(" · "):Q.t("noAllergen");
+    var m='<div><span>'+Q.esc(Q.t("menu"))+'</span><b>'+Q.esc(Q.price(it.p))+'</b></div>';
+    if(it.k) m+='<div><span>'+Q.esc(Q.t("kcal"))+' · '+Q.esc(Q.t("approx"))+'</span><b>'+it.k+'</b></div>';
+    m+='<div><span>'+Q.esc(Q.t("allergens"))+'</span><b class="al">'+Q.esc(al)+'</b></div>';
+    document.getElementById("shMeta").innerHTML=m;
+    document.getElementById("shWarn").textContent=Q.t("calNote")+" "+Q.t("allergenNote");
+    sheet.hidden=false; document.body.style.overflow="hidden";
+    sheet.querySelector(".x").focus();
+  }
+  function close(){ sheet.hidden=true; document.body.style.overflow=""; }
+  sheet.addEventListener("click",function(e){ if(e.target.closest("[data-close]")) close(); });
+  document.addEventListener("keydown",function(e){ if(e.key==="Escape"&&!sheet.hidden) close(); });
+  document.getElementById("list").addEventListener("click",function(e){
+    var b=e.target.closest(".item"); if(b) open(b.dataset.id);
+  });
+  var qi=document.getElementById("q"), clr=document.getElementById("clr");
+  qi.addEventListener("input",function(e){ filter=e.target.value; active=""; clr.hidden=!filter; tabs(); render(); });
+  clr.addEventListener("click",function(){ qi.value=""; filter=""; clr.hidden=true; tabs(); render(); qi.focus(); });
+
+  Q.onLang(function(){ texts(); tabs(); render(); });
+  texts(); tabs(); render();
+})();
+</script>

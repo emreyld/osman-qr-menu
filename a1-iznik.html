@@ -1,0 +1,386 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>İznik Panosu</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gilda+Display&family=Karla:wght@300;400;500;600&display=swap">
+<style>
+:root{
+  --cobalt:#16357E; --cobalt-dk:#0C1C46; --cobalt-lt:#2B54B0;
+  --turq:#2A9DA8; --turq-dk:#1B6E77;
+  --bole:#C1422C; --bole-dk:#8E2C1B;
+  --glaze:#F8F5ED; --glaze-2:#EFE9DA; --glaze-3:#E3DAC6;
+  --sage:#6E9179; --ink:#101A34; --ink-2:#3C4763; --muted:#6F7894;
+  --display:"Gilda Display",Georgia,serif;
+  --body:"Karla",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--cobalt-dk);color:var(--ink);
+  font-family:var(--body);font-weight:400;font-size:16px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{margin:0;font-family:var(--display);font-weight:400;text-wrap:balance;line-height:1.2}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--turq);outline-offset:3px}
+[hidden]{display:none!important}
+.stage{max-width:720px;margin:0 auto;padding-inline:14px;padding-block:14px 0}
+
+/* ---------- logo kilidi ---------- */
+.lk{display:block;text-align:center;line-height:1}
+.lk-orn{display:block;color:var(--turq)}
+.lk-crest{display:inline-block}
+.lk-word{display:flex;align-items:flex-start;justify-content:center;gap:5px;margin-top:10px}
+.lk-main{font-family:var(--display);font-size:2.55em;letter-spacing:.005em;color:var(--cobalt)}
+.lk-stack{display:flex;flex-direction:column;gap:2px;padding-top:.24em}
+.lk-stack i{font-style:normal;font-size:.76em;font-weight:600;letter-spacing:.06em;color:var(--cobalt)}
+.lk-since{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:9px;font-size:.6em;letter-spacing:.24em;color:var(--bole);font-weight:600}
+.lk-since i{display:block;width:26px;height:1px;background:var(--bole);opacity:.65}
+.lk-sub{display:block;margin-top:9px;font-size:.58em;letter-spacing:.22em;color:var(--ink-2);font-weight:500}
+.lk.on-dark .lk-main,.lk.on-dark .lk-stack i{color:var(--glaze)}
+.lk.on-dark .lk-since{color:var(--turq)}
+.lk.on-dark .lk-since i{background:var(--turq)}
+.lk.on-dark .lk-sub{color:#A9BBDF}
+
+/* ---------- üst şerit ---------- */
+.rail{position:sticky;top:0;z-index:40;background:var(--cobalt-dk)}
+.rail-in{display:flex;align-items:center;gap:12px;max-width:720px;margin:0 auto;padding:9px 14px}
+.rail .sm{color:var(--turq);display:flex;flex:none}
+.rail .tt{flex:1;font-family:var(--display);font-size:16px;color:var(--glaze);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.langs{display:flex;gap:2px;flex:none}
+.langs button{width:32px;height:30px;font-size:10.5px;font-weight:600;letter-spacing:.06em;color:#9FB2D8;border:1px solid transparent}
+.langs button[aria-pressed=true]{background:var(--turq);color:var(--cobalt-dk);border-color:var(--turq)}
+.rail .band{color:var(--turq);opacity:.55}
+
+/* ---------- pano çerçevesi ---------- */
+.panel{
+  position:relative;background:var(--glaze);
+  border:3px solid var(--cobalt);box-shadow:0 0 0 1px var(--cobalt-dk),0 14px 40px rgba(6,14,40,.45);
+  padding:0 0 26px;
+}
+.panel::before{content:"";position:absolute;inset:6px;border:1px solid var(--turq);opacity:.45;pointer-events:none}
+.panel .edge{color:var(--cobalt);display:block}
+.corner{position:absolute;width:26px;height:26px;color:var(--bole);opacity:.75;pointer-events:none}
+.corner.tl{inset-inline-start:12px;top:44px}
+.corner.tr{inset-inline-end:12px;top:44px}
+.pad{padding-inline:clamp(16px,5vw,34px)}
+
+/* ---------- kapak ---------- */
+.plate{text-align:center;padding-block:34px 4px;position:relative}
+.plate .lk{font-size:clamp(15px,3.6vw,19px)}
+.plate .halo{position:absolute;inset-inline:0;top:-4px;display:flex;justify-content:center;color:var(--cobalt);opacity:.07;pointer-events:none}
+.plate .facts{display:flex;justify-content:center;flex-wrap:wrap;gap:6px 14px;margin-top:22px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.plate .facts b{color:var(--bole);font-weight:600}
+.rule-orn{display:flex;align-items:center;justify-content:center;gap:12px;margin:26px 0 0;color:var(--cobalt)}
+.rule-orn i{display:block;height:1px;flex:1;background:currentColor;opacity:.35}
+
+/* ---------- arama ---------- */
+.seek{display:flex;align-items:center;gap:10px;margin-top:22px;border:1.5px solid var(--cobalt);background:#fff;padding:0 13px}
+.seek svg{color:var(--cobalt-lt);flex:none}
+.seek input{flex:1;background:none;border:0;font:inherit;font-size:15.5px;color:var(--ink);padding:12px 0;min-width:0}
+.seek input::placeholder{color:var(--muted)}
+.seek .clr{color:var(--muted);font-size:18px;line-height:1;width:26px;height:26px}
+.seek .clr[hidden]{display:none}
+
+/* ---------- çini kategori ızgarası ---------- */
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:22px}
+@media(min-width:560px){.tiles{grid-template-columns:repeat(3,1fr)}}
+.tile{
+  position:relative;overflow:hidden;aspect-ratio:1/.82;
+  background:var(--cobalt);color:var(--glaze);
+  display:flex;flex-direction:column;justify-content:flex-end;
+  padding:12px;text-align:start;
+  box-shadow:inset 0 0 0 1px var(--cobalt-dk),inset 0 0 0 5px var(--cobalt),inset 0 0 0 6px rgba(42,157,168,.5);
+  animation:tileIn .44s cubic-bezier(.2,.75,.3,1) backwards;
+}
+.tile .art{position:absolute;inset-inline-end:-14px;top:-12px;color:var(--turq);opacity:.5;pointer-events:none}
+.tile .art2{position:absolute;inset-inline-start:-20px;bottom:-22px;color:var(--bole);opacity:.32;pointer-events:none}
+.tile h2{font-size:15.5px;line-height:1.2;position:relative}
+.tile .n{font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:#9FC6CC;margin-top:4px;position:relative}
+.tile:hover,.tile:focus-visible{background:var(--cobalt-lt)}
+.tile:hover .art{opacity:.75}
+@keyframes tileIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.tile{animation:none}}
+
+/* ---------- kategori sayfası ---------- */
+.back{display:flex;align-items:center;gap:11px;width:100%;text-align:start;margin-top:22px;padding:11px 13px;border:1.5px solid var(--cobalt);background:#fff}
+.back .ar{width:30px;height:30px;background:var(--cobalt);color:var(--glaze);display:grid;place-items:center;flex:none;font-size:15px;line-height:1}
+.back b{font-family:var(--display);font-weight:400;font-size:19px;flex:1;line-height:1.2}
+.back span{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+
+.chead{text-align:center;padding-block:30px 6px;position:relative}
+.chead .bigmotif{color:var(--cobalt);opacity:.1;display:flex;justify-content:center}
+.chead h2{font-size:clamp(25px,6vw,33px);color:var(--cobalt);margin-top:-14px;position:relative}
+.chead p{margin:8px 0 0;font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--bole);font-weight:600}
+
+.items{margin-top:20px}
+.item{
+  display:grid;grid-template-columns:auto 1fr auto;gap:2px 11px;width:100%;text-align:start;
+  padding:14px 0;border-bottom:1px solid var(--glaze-3);
+}
+.item:last-child{border-bottom:0}
+.item .bul{grid-row:1/span 3;color:var(--bole);padding-top:4px;flex:none;opacity:.9}
+.item .nm{font-family:var(--display);font-size:19px;line-height:1.25;color:var(--ink)}
+.item .pr{grid-row:1;grid-column:3;font-size:15px;font-weight:600;color:var(--cobalt);font-variant-numeric:tabular-nums;white-space:nowrap;padding-top:3px}
+.item .pr.ask{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--bole-dk);font-weight:600;padding-top:6px}
+.item .ds{grid-column:2;font-size:13.5px;color:var(--muted);line-height:1.5;max-width:48ch;margin-top:3px}
+.item .bs{grid-column:2;display:flex;flex-wrap:wrap;gap:5px 9px;margin-top:8px;align-items:center}
+.item:hover{background:var(--glaze-2)}
+.item:hover .nm{color:var(--cobalt)}
+.bdg{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--turq-dk);border:1px solid rgba(42,157,168,.45);padding:2px 6px}
+.bdg.hot{color:var(--bole-dk);border-color:rgba(193,66,44,.4)}
+.bdg.chef{color:#8A6A1E;border-color:rgba(176,141,70,.5)}
+.kcal{font-size:11px;letter-spacing:.06em;color:var(--muted);font-variant-numeric:tabular-nums}
+.empty{padding:56px 0;text-align:center;color:var(--muted);font-size:14px;letter-spacing:.06em}
+
+/* arama sonucu grupları */
+.grp{margin-top:26px}
+.grp-h{display:flex;align-items:center;gap:10px;color:var(--cobalt);border-bottom:1.5px solid var(--cobalt);padding-bottom:7px}
+.grp-h h3{font-size:18px;flex:1}
+.grp-h span{font-size:11px;letter-spacing:.1em;color:var(--muted)}
+
+/* ---------- iletişim ---------- */
+.foot{margin-top:30px;background:var(--cobalt);color:var(--glaze);padding-block:0 30px}
+.foot .band{color:var(--turq);opacity:.6}
+.foot h3{text-align:center;font-size:22px;padding-top:26px;color:var(--glaze)}
+.foot .rows{display:grid;gap:13px;margin-top:20px;text-align:center}
+.foot .rows p{margin:3px 0 0;font-size:14.5px;color:#D6E0F4;line-height:1.5}
+.foot .rows b{display:block;font-size:10.5px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--turq)}
+.acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(142px,1fr));gap:8px;margin-top:24px}
+.acts a{display:flex;align-items:center;justify-content:center;min-height:50px;border:1px solid rgba(42,157,168,.7);color:var(--glaze);text-decoration:none;font-size:12px;letter-spacing:.14em;text-transform:uppercase;text-align:center;padding:0 8px}
+.acts a:hover{background:var(--cobalt-lt)}
+.acts a.solid{background:var(--bole);border-color:var(--bole)}
+.acts a.solid:hover{background:var(--bole-dk)}
+.note{margin-top:22px;font-size:11px;line-height:1.7;color:#9FB2D8;text-align:center;letter-spacing:.03em}
+.sig{text-align:center;color:#7E93C0;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;padding-block:18px 26px}
+
+/* ---------- detay ---------- */
+.sheet{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center}
+@media(min-width:640px){.sheet{align-items:center}}
+.sheet .bd{position:absolute;inset:0;background:rgba(6,14,40,.72)}
+.card{
+  position:relative;width:100%;max-width:500px;max-height:88vh;overflow-y:auto;
+  background:var(--glaze);border:3px solid var(--cobalt);border-bottom:0;
+  padding:0 0 28px;text-align:center;
+}
+@media(min-width:640px){.card{border-bottom:3px solid var(--cobalt)}}
+.card .x{position:absolute;inset-inline-end:12px;top:12px;width:34px;height:34px;background:var(--cobalt);color:var(--glaze);font-size:17px;line-height:1;z-index:2}
+.card .inner{padding:26px 22px 0}
+.card .ct{font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--bole)}
+.card h3{font-size:27px;margin:10px 0 0;color:var(--cobalt)}
+.card .ds{color:var(--ink-2);font-size:15px;margin-top:12px;line-height:1.6}
+.card .mot{display:flex;justify-content:center;color:var(--turq);margin:20px 0 4px;opacity:.7}
+.meta{display:grid;gap:16px;margin-top:14px}
+.meta span{display:block;font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.meta b{font-family:var(--display);font-weight:400;font-size:27px;color:var(--cobalt);font-variant-numeric:tabular-nums}
+.meta b.al{font-family:var(--body);font-size:15px;font-weight:500;color:var(--ink-2)}
+.warn{margin-top:22px;font-size:11px;color:var(--muted);line-height:1.7;padding-inline:22px}
+</style>
+
+<div class="rail"><div class="rail-in">
+  <span class="sm" id="railCrest"></span>
+  <span class="tt">Osman Gourmet Beydağı</span>
+  <nav class="langs" id="langs" aria-label="Language"></nav>
+</div><div id="railBand"></div></div>
+
+<div class="stage">
+  <div class="panel">
+    <div id="topBand"></div>
+    <span class="corner tl" id="cTL"></span>
+    <span class="corner tr" id="cTR"></span>
+
+    <div class="pad">
+      <section class="plate" id="plate">
+        <span class="halo" id="halo"></span>
+        <div id="logo"></div>
+        <div class="facts">
+          <span><b>★ 4,7</b> · 1.250 <span id="rv"></span></span>
+          <span id="hrs"></span>
+          <span id="dist"></span>
+        </div>
+        <div class="rule-orn"><i></i><span id="ruleMot"></span><i></i></div>
+      </section>
+
+      <label class="seek">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="q" type="search" autocomplete="off" aria-label="Search">
+        <button class="clr" id="clr" type="button" hidden aria-label="Clear">×</button>
+      </label>
+
+      <main id="view"></main>
+    </div>
+  </div>
+
+  <footer class="foot">
+    <div id="footBand"></div>
+    <div class="pad">
+      <h3 id="infoT"></h3>
+      <div class="rows">
+        <p><b id="lAdr"></b>Binbirdirek, Klodfarer Cd. No:27/B<br>34122 Fatih · İstanbul</p>
+        <p><b id="lTel"></b>(0212) 638 34 44</p>
+        <p><b id="lHrs"></b><span id="hrs2"></span></p>
+      </div>
+      <div class="acts" id="acts"></div>
+      <p class="note" id="footnote"></p>
+    </div>
+  </footer>
+  <p class="sig">Osman Gourmet Beydağı · Sultanahmet</p>
+</div>
+
+<div class="sheet" id="sheet" hidden>
+  <div class="bd" data-close></div>
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="shName">
+    <button class="x" data-close aria-label="Close">×</button>
+    <div id="shBand"></div>
+    <div class="inner">
+      <p class="ct" id="shCat"></p>
+      <h3 id="shName"></h3>
+      <p class="ds" id="shDesc"></p>
+      <div class="mot" id="shMot"></div>
+      <div class="meta" id="shMeta"></div>
+    </div>
+    <p class="warn" id="shWarn"></p>
+  </div>
+</div>
+
+<script src="menu-data.js"></script>
+<script src="core.js"></script>
+<script src="brand.js"></script>
+<script>
+(function(){
+  Q.init();
+  var V=window.VENUE, filter="", openCat=null;
+
+  document.getElementById("railCrest").innerHTML=Brand.crest(22);
+  document.getElementById("railBand").innerHTML=Brand.band("thin",8,"band");
+  document.getElementById("topBand").innerHTML=Brand.band("tile",30,"edge");
+  document.getElementById("footBand").innerHTML=Brand.band("rumi",22,"band");
+  document.getElementById("shBand").innerHTML=Brand.band("tile",22,"edge");
+  document.getElementById("cTL").innerHTML=Brand.rosette(8,26);
+  document.getElementById("cTR").innerHTML=Brand.rosette(8,26);
+  document.getElementById("halo").innerHTML=Brand.rosette(12,190);
+  document.getElementById("ruleMot").innerHTML=Brand.motif("tulip",18);
+  document.getElementById("logo").innerHTML=Brand.lockup({crest:54});
+
+  var lw=document.getElementById("langs");
+  window.LANGS.forEach(function(l){
+    var b=document.createElement("button");
+    b.type="button"; b.textContent=l.short; b.setAttribute("lang",l.code);
+    b.onclick=function(){Q.setLang(l.code)};
+    lw.appendChild(b);
+  });
+
+  function badges(it){
+    var s="";
+    (it.t||[]).forEach(function(tg){
+      var cls=tg==="spicy"?" hot":(tg==="chef"?" chef":"");
+      s+='<span class="bdg'+cls+'">'+Q.esc(Q.tag(tg))+'</span>';
+    });
+    if(it.k) s+='<span class="kcal">~'+it.k+' '+Q.esc(Q.t("kcal"))+'</span>';
+    return s;
+  }
+  function itemHTML(it){
+    return '<button class="item" type="button" data-id="'+it._id+'">'+
+      '<span class="bul">'+Brand.motif("tulip",13)+'</span>'+
+      '<span class="nm">'+Q.esc(Q.L(it.i))+'</span>'+
+      '<span class="pr'+(it.p===null?' ask':'')+'">'+Q.esc(Q.price(it.p))+'</span>'+
+      (it.d?'<span class="ds">'+Q.esc(Q.L(it.d))+'</span>':'')+
+      '<span class="bs">'+badges(it)+'</span>'+
+      '</button>';
+  }
+
+  function render(){
+    var host=document.getElementById("view");
+
+    if(filter){
+      var data=Q.search(filter), out="";
+      if(!data.length){ host.innerHTML='<p class="empty">'+Q.esc(Q.t("empty"))+'</p>'; return; }
+      data.forEach(function(cat){
+        out+='<section class="grp"><div class="grp-h">'+Brand.motif(Brand.motifFor(cat.id),18)+
+          '<h3>'+Q.esc(Q.L(cat.n))+'</h3><span>'+cat.items.length+'</span></div><div class="items">';
+        cat.items.forEach(function(it){ out+=itemHTML(it); });
+        out+='</div></section>';
+      });
+      host.innerHTML=out;
+      return;
+    }
+
+    if(openCat){
+      var cat=window.MENU.filter(function(c){return c.id===openCat})[0];
+      var o='<button class="back" type="button" id="backBtn"><span class="ar">←</span>'+
+        '<b>'+Q.esc(Q.t("backToMenu"))+'</b><span>'+cat.items.length+' '+Q.esc(Q.t("items"))+'</span></button>'+
+        '<div class="chead"><span class="bigmotif">'+Brand.motif(Brand.motifFor(cat.id),96)+'</span>'+
+        '<h2>'+Q.esc(Q.L(cat.n))+'</h2><p>Osman Gourmet Beydağı</p></div><div class="items">';
+      cat.items.forEach(function(it){ o+=itemHTML(it); });
+      o+='</div>';
+      host.innerHTML=o;
+      document.getElementById("backBtn").onclick=function(){ openCat=null; render(); window.scrollTo({top:0,behavior:"smooth"}); };
+      return;
+    }
+
+    var t='<div class="tiles">';
+    window.MENU.forEach(function(cat,i){
+      t+='<button class="tile" type="button" data-cat="'+cat.id+'" style="animation-delay:'+(i*26)+'ms">'+
+        '<span class="art">'+Brand.motif(Brand.motifFor(cat.id),76)+'</span>'+
+        '<span class="art2">'+Brand.motif("saz",62)+'</span>'+
+        '<h2>'+Q.esc(Q.L(cat.n))+'</h2>'+
+        '<span class="n">'+cat.items.length+' '+Q.esc(Q.t("items"))+'</span></button>';
+    });
+    t+='</div>';
+    host.innerHTML=t;
+  }
+
+  function texts(){
+    document.getElementById("rv").textContent=Q.t("reviews");
+    document.getElementById("hrs").textContent=Q.L(V.hours);
+    document.getElementById("hrs2").textContent=Q.L(V.hours);
+    document.getElementById("dist").textContent=Q.L(V.district);
+    document.getElementById("q").placeholder=Q.t("search");
+    document.getElementById("infoT").textContent=Q.t("info");
+    document.getElementById("lAdr").textContent=Q.t("address");
+    document.getElementById("lTel").textContent=Q.t("phone");
+    document.getElementById("lHrs").textContent=Q.t("hours");
+    document.getElementById("footnote").textContent=Q.t("calNote")+" "+Q.t("allergenNote");
+    document.getElementById("acts").innerHTML=
+      '<a class="solid" href="tel:'+V.phone.replace(/\s/g,"")+'">'+Q.esc(Q.t("call"))+'</a>'+
+      '<a href="'+V.directions+'" target="_blank" rel="noopener">'+Q.esc(Q.t("directions"))+'</a>'+
+      '<a href="https://wa.me/'+V.whatsapp+'" target="_blank" rel="noopener">'+Q.esc(Q.t("whatsapp"))+'</a>'+
+      '<a href="'+V.reservation+'" target="_blank" rel="noopener">'+Q.esc(Q.t("reserve"))+'</a>';
+    Array.prototype.forEach.call(lw.children,function(b,i){
+      b.setAttribute("aria-pressed", window.LANGS[i].code===Q.lang);
+    });
+  }
+
+  var sheet=document.getElementById("sheet");
+  function open(id){
+    var it=Q.find(id); if(!it) return;
+    document.getElementById("shCat").textContent=Q.L(it._cat.n);
+    document.getElementById("shName").textContent=Q.L(it.i);
+    var d=document.getElementById("shDesc");
+    d.textContent=it.d?Q.L(it.d):""; d.style.display=it.d?"":"none";
+    document.getElementById("shMot").innerHTML=Brand.motif(Brand.motifFor(it._cat.id),34);
+    var al=(it.a&&it.a.length)?it.a.map(Q.allergen).join(" · "):Q.t("noAllergen");
+    var m='<div><span>'+Q.esc(Q.t("menu"))+'</span><b>'+Q.esc(Q.price(it.p))+'</b></div>';
+    if(it.k) m+='<div><span>'+Q.esc(Q.t("kcal"))+' · '+Q.esc(Q.t("approx"))+'</span><b>'+it.k+'</b></div>';
+    m+='<div><span>'+Q.esc(Q.t("allergens"))+'</span><b class="al">'+Q.esc(al)+'</b></div>';
+    document.getElementById("shMeta").innerHTML=m;
+    document.getElementById("shWarn").textContent=Q.t("calNote")+" "+Q.t("allergenNote");
+    sheet.hidden=false; document.body.style.overflow="hidden";
+    sheet.querySelector(".x").focus();
+  }
+  function close(){ sheet.hidden=true; document.body.style.overflow=""; }
+  sheet.addEventListener("click",function(e){ if(e.target.closest("[data-close]")) close(); });
+  document.addEventListener("keydown",function(e){ if(e.key==="Escape"&&!sheet.hidden) close(); });
+  document.getElementById("view").addEventListener("click",function(e){
+    var t=e.target.closest("[data-cat]");
+    if(t){ openCat=t.dataset.cat; render(); window.scrollTo({top:0,behavior:"smooth"}); return; }
+    var b=e.target.closest(".item"); if(b) open(b.dataset.id);
+  });
+  var qi=document.getElementById("q"), clr=document.getElementById("clr");
+  qi.addEventListener("input",function(e){ filter=e.target.value; clr.hidden=!filter; render(); });
+  clr.addEventListener("click",function(){ qi.value=""; filter=""; clr.hidden=true; render(); qi.focus(); });
+
+  Q.onLang(function(){ texts(); render(); });
+  texts(); render();
+})();
+</script>

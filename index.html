@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Osman Gourmet — Tasarım Denemesi</title>
+<style>
+:root{
+  --bg:#12141A; --panel:#1A1D25; --panel-2:#222732; --line:#2C3140;
+  --text:#EDEFF3; --muted:#8B93A3; --gold:#C9A961; --green:#4ED2A0;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font:400 16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  -webkit-font-smoothing:antialiased;padding-block:0 48px}
+.wrap{max-width:560px;margin:0 auto;padding-inline:18px}
+h1{margin:0;font-size:22px;letter-spacing:-.01em}
+h2{margin:0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
+p{margin:0}
+a{color:inherit;text-decoration:none}
+
+header{border-bottom:1px solid var(--line);padding-block:22px 20px;margin-bottom:24px}
+header p{color:var(--muted);font-size:14px;margin-top:5px}
+
+.qr{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;text-align:center;margin-bottom:28px}
+.qr .box{width:216px;height:216px;margin:0 auto 14px;background:#fff;border-radius:10px;display:grid;place-items:center;padding:12px}
+.qr canvas,.qr img{display:block;width:100%;height:100%}
+.qr .url{font:600 15px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--green);word-break:break-all}
+.qr .hint{color:var(--muted);font-size:13px;margin-top:8px}
+
+.group{margin-bottom:26px}
+.group h2{margin-bottom:10px}
+.list{display:grid;gap:8px}
+.card{display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--line);
+  border-radius:12px;padding:14px 16px;min-height:66px}
+.card:active{background:var(--panel-2)}
+.card .em{font-size:24px;line-height:1;flex:none}
+.card .tx{flex:1;min-width:0}
+.card b{display:block;font-size:16.5px;font-weight:600}
+.card span{display:block;font-size:13px;color:var(--muted);margin-top:2px}
+.card .go{color:var(--gold);font-size:18px;flex:none}
+
+footer{border-top:1px solid var(--line);margin-top:30px;padding-top:20px;color:var(--muted);font-size:13px;line-height:1.7}
+footer b{color:var(--text)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Osman Gourmet Beydağı</h1>
+    <p>QR menü tasarım denemesi · 8 seçenek</p>
+  </header>
+
+  <section class="qr">
+    <div class="box" id="qrbox"></div>
+    <p class="url" id="url"></p>
+    <p class="hint">Telefonun kamerasıyla bu kareyi okut</p>
+  </section>
+
+  <div class="group">
+    <h2>Zengin &amp; otantik</h2>
+    <div class="list">
+      <a class="card" href="a1-iznik.html"><span class="em">🏺</span><span class="tx"><b>İznik Panosu</b><span>Çini karolar, kobalt mavi, lale motifleri</span></span><span class="go">→</span></a>
+      <a class="card" href="a2-sini.html"><span class="em">🪙</span><span class="tx"><b>Pirinç Sini</b><span>Kazınmış pirinç levhalar, yuvarlak sini</span></span><span class="go">→</span></a>
+      <a class="card" href="a3-kilim.html"><span class="em">🧶</span><span class="tx"><b>Kilim Dokuma</b><span>Dokuma kenarlar, kök boya renkleri</span></span><span class="go">→</span></a>
+    </div>
+  </div>
+
+  <div class="group">
+    <h2>Şık &amp; pahalı</h2>
+    <div class="list">
+      <a class="card" href="b1-sessiz.html"><span class="em">🕯️</span><span class="tx"><b>Sessiz Salon</b><span>Siyah zemin, devasa başlıklar, bol boşluk</span></span><span class="go">→</span></a>
+      <a class="card" href="b2-mermer.html"><span class="em">🏛️</span><span class="tx"><b>Mermer Levha</b><span>Damarlı mermer, pirinç çerçeve</span></span><span class="go">→</span></a>
+      <a class="card" href="b3-kart.html"><span class="em">🎴</span><span class="tx"><b>Varaklı Kart</b><span>Deri masa, varak baskı, kart çevirme</span></span><span class="go">→</span></a>
+    </div>
+  </div>
+
+  <div class="group">
+    <h2>Canlı &amp; modern</h2>
+    <div class="list">
+      <a class="card" href="c1-ocak.html"><span class="em">🔥</span><span class="tx"><b>Ocak Başı</b><span>Renk blokları, yemek çizimleri</span></span><span class="go">→</span></a>
+      <a class="card" href="c2-afis.html"><span class="em">🎨</span><span class="tx"><b>Riso Afiş</b><span>Çift baskı, tram noktaları, bilet blokları</span></span><span class="go">→</span></a>
+    </div>
+  </div>
+
+  <footer>
+    Telefon ve bilgisayar <b>aynı Wi-Fi ağında</b> olmalı.<br>
+    Her tasarımda dil değiştirmeyi (TR / EN / AR / RU), aramayı ve bir ürüne dokunmayı dene.
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+(function(){
+  var base = location.origin + location.pathname.replace(/index\.html$/,"");
+  document.getElementById("url").textContent = base;
+  var box = document.getElementById("qrbox");
+  if (window.QRCode) {
+    new QRCode(box, { text: base, width: 192, height: 192, correctLevel: QRCode.CorrectLevel.M });
+  } else {
+    box.innerHTML = '<p style="color:#333;font-size:13px;padding:10px">QR kitaplığı yüklenemedi — adresi telefona elle yaz.</p>';
+  }
+})();
+</script>
+</body>
+</html>

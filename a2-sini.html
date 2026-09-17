@@ -1,0 +1,342 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pirinç Sini</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Jost:wght@300;400;500&display=swap">
+<style>
+:root{
+  --b-hi:#F7E7BC; --b-1:#E2C88C; --b-2:#CBA95F; --b-3:#A8823C; --b-4:#7A5C25; --b-5:#4E3A14;
+  --engrave:#3A2A0E; --engrave-2:#5A441C; --engrave-3:#786031;
+  --wood:#1F1811; --wood-2:#2B211729; --wood-lt:#332619;
+  --copper:#9C4A22; --cream:#F3E9D2;
+  --display:"Cinzel",Georgia,serif;
+  --body:"Jost",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --plate:linear-gradient(158deg,var(--b-2) 0%,var(--b-hi) 14%,var(--b-1) 34%,var(--b-2) 56%,var(--b-1) 74%,var(--b-3) 100%);
+  --plate-edge:0 0 0 1px var(--b-4),0 0 0 4px var(--b-5),0 14px 34px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,248,225,.75),inset 0 -2px 6px rgba(94,70,24,.35);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;color:var(--engrave);
+  background:var(--wood);
+  background-image:
+    repeating-linear-gradient(94deg,rgba(0,0,0,.22) 0 2px,transparent 2px 7px),
+    repeating-linear-gradient(88deg,rgba(255,220,170,.035) 0 1px,transparent 1px 11px),
+    radial-gradient(120% 70% at 50% 0%,#3A2B1C 0%,var(--wood) 62%);
+  font-family:var(--body);font-weight:300;font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{margin:0;font-family:var(--display);font-weight:600;text-wrap:balance;line-height:1.2;letter-spacing:.04em}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--b-hi);outline-offset:3px}
+[hidden]{display:none!important}
+.hall{max-width:660px;margin:0 auto;padding-inline:16px}
+.etch{text-shadow:0 1px 0 rgba(255,246,222,.55)}
+
+/* ---------- logo ---------- */
+.lk{display:block;text-align:center;line-height:1}
+.lk-orn{display:block;color:var(--engrave-2)}
+.lk-word{display:flex;align-items:flex-start;justify-content:center;gap:5px;margin-top:9px}
+.lk-main{font-family:var(--display);font-weight:600;font-size:2.3em;color:var(--engrave)}
+.lk-stack{display:flex;flex-direction:column;gap:2px;padding-top:.3em}
+.lk-stack i{font-style:normal;font-size:.68em;font-weight:600;letter-spacing:.1em;font-family:var(--display);color:var(--engrave)}
+.lk-since{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;font-size:.56em;letter-spacing:.28em;color:var(--engrave-2);font-weight:500}
+.lk-since i{display:block;width:24px;height:1px;background:var(--engrave-2);opacity:.6}
+.lk-sub{display:block;margin-top:9px;font-size:.54em;letter-spacing:.24em;color:var(--engrave-3);font-weight:500}
+.lk.gold .lk-orn,.lk.gold .lk-main,.lk.gold .lk-stack i{color:var(--b-1)}
+.lk.gold .lk-since{color:var(--b-3)}
+.lk.gold .lk-since i{background:var(--b-3)}
+.lk.gold .lk-sub{color:var(--b-4)}
+
+/* ---------- üst ---------- */
+.top{position:sticky;top:0;z-index:40;background:rgba(24,18,12,.93);backdrop-filter:blur(8px);border-bottom:1px solid #4A3818}
+.top-in{display:flex;align-items:center;gap:12px;max-width:660px;margin:0 auto;padding:10px 16px}
+.top .cr{color:var(--b-2);display:flex;flex:none}
+.top .tt{flex:1;font-family:var(--display);font-weight:600;font-size:14px;letter-spacing:.1em;color:var(--b-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.langs{display:flex;gap:3px;flex:none}
+.langs button{width:32px;height:30px;font-size:10.5px;font-weight:500;letter-spacing:.06em;color:var(--b-4);border:1px solid #453317}
+.langs button[aria-pressed=true]{background:var(--plate);color:var(--engrave);border-color:var(--b-4)}
+
+/* ---------- yuvarlak sini ---------- */
+.tray-wrap{padding-block:34px 8px;display:flex;justify-content:center}
+.tray{
+  position:relative;width:min(88vw,370px);aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle at 34% 26%,var(--b-hi) 0%,var(--b-1) 22%,var(--b-2) 48%,var(--b-3) 74%,var(--b-4) 100%);
+  box-shadow:0 0 0 2px var(--b-4),0 0 0 7px var(--b-5),0 0 0 8px #6A5120,0 22px 50px rgba(0,0,0,.6),
+             inset 0 3px 8px rgba(255,248,225,.6),inset 0 -8px 18px rgba(80,58,18,.5);
+  display:grid;place-items:center;text-align:center;
+  animation:rise .7s cubic-bezier(.2,.75,.3,1) backwards;
+}
+@keyframes rise{from{opacity:0;transform:translateY(18px) scale(.96)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.tray{animation:none}}
+.tray::before,.tray::after{content:"";position:absolute;border-radius:50%;pointer-events:none}
+.tray::before{inset:16px;border:1px solid rgba(78,58,20,.55);box-shadow:inset 0 0 0 1px rgba(255,246,222,.45)}
+.tray::after{inset:26px;border:2px solid rgba(78,58,20,.28)}
+.tray .ring{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;color:var(--engrave-2);opacity:.28}
+.tray .inner{position:relative;padding:0 16%}
+.tray .lk{font-size:clamp(12px,3.3vw,15px)}
+.tray .stars{margin-top:14px;font-size:11px;letter-spacing:.18em;color:var(--engrave-2)}
+
+.caption{text-align:center;color:var(--b-3);font-size:11px;letter-spacing:.26em;text-transform:uppercase;padding-block:22px 6px}
+
+/* ---------- pirinç şerit gezinme ---------- */
+.nav{position:sticky;top:51px;z-index:30;padding-block:10px 0;background:linear-gradient(180deg,rgba(24,18,12,.97) 72%,transparent)}
+.seek{display:flex;align-items:center;gap:10px;background:var(--plate);box-shadow:var(--plate-edge);padding:0 13px;margin-bottom:9px}
+.seek svg{color:var(--engrave-2);flex:none}
+.seek input{flex:1;background:none;border:0;font:inherit;font-size:15px;color:var(--engrave);padding:11px 0;min-width:0}
+.seek input::placeholder{color:var(--engrave-3)}
+.seek .clr{color:var(--engrave-2);font-size:18px;line-height:1;width:26px;height:26px}
+.seek .clr[hidden]{display:none}
+.tabs{display:flex;gap:5px;overflow-x:auto;padding-bottom:10px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{
+  flex:none;padding:7px 13px;font-size:11.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--b-3);border:1px solid #4A3818;white-space:nowrap;min-height:34px;background:#241A10;
+}
+.tabs button[aria-pressed=true]{background:var(--plate);color:var(--engrave);border-color:var(--b-4);text-shadow:0 1px 0 rgba(255,246,222,.5)}
+
+/* ---------- levha ---------- */
+.plate{
+  position:relative;background:var(--plate);box-shadow:var(--plate-edge);
+  margin-top:26px;padding:0 0 22px;scroll-margin-top:124px;
+}
+.plate .edge{color:rgba(78,58,20,.5);display:block}
+.plate .pad{padding-inline:clamp(16px,5vw,30px)}
+.plate-h{text-align:center;padding-block:22px 4px;position:relative}
+.plate-h .mot{color:var(--engrave-2);opacity:.2;display:flex;justify-content:center}
+.plate-h h2{font-size:clamp(20px,5.4vw,27px);margin-top:-16px;position:relative}
+.plate-h .sub{margin:9px 0 0;font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--engrave-3)}
+.plate-h .div{display:flex;align-items:center;gap:10px;margin-top:16px;color:var(--engrave-2)}
+.plate-h .div i{height:1px;flex:1;background:currentColor;opacity:.4}
+
+.item{
+  display:grid;grid-template-columns:1fr auto;gap:2px 16px;width:100%;text-align:start;
+  padding:13px 0;border-bottom:1px solid rgba(78,58,20,.22);box-shadow:0 1px 0 rgba(255,246,222,.4);
+}
+.item:last-child{border-bottom:0;box-shadow:none}
+.item .nm{font-family:var(--display);font-weight:400;font-size:17px;line-height:1.3;color:var(--engrave)}
+.item .pr{grid-row:1;grid-column:2;font-size:15.5px;font-weight:500;color:var(--engrave);font-variant-numeric:tabular-nums;white-space:nowrap;padding-top:2px}
+.item .pr.ask{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--engrave-2);padding-top:6px}
+.item .ds{grid-column:1;font-size:13px;color:var(--engrave-2);line-height:1.5;max-width:48ch;margin-top:3px}
+.item .bs{grid-column:1;display:flex;flex-wrap:wrap;gap:5px 10px;margin-top:8px;align-items:center}
+.item:hover{background:linear-gradient(90deg,rgba(255,246,222,.4),transparent)}
+.bdg{font-size:9.5px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--engrave-2);border:1px solid rgba(78,58,20,.32);padding:2px 6px}
+.bdg.hot{color:var(--copper);border-color:rgba(156,74,34,.45)}
+.bdg.chef{color:#6A4A12;border-color:rgba(106,74,18,.45);background:rgba(255,246,222,.4)}
+.kcal{font-size:10.5px;letter-spacing:.1em;color:var(--engrave-3);font-variant-numeric:tabular-nums}
+.empty{padding:60px 0;text-align:center;color:var(--b-3);letter-spacing:.2em;text-transform:uppercase;font-size:12px}
+
+/* ---------- iletişim ---------- */
+.foot{margin-top:34px;padding-bottom:44px}
+.foot .plate{margin-top:0}
+.foot h3{text-align:center;font-size:20px;padding-top:24px}
+.rows{display:grid;gap:13px;margin-top:18px;text-align:center}
+.rows p{margin:2px 0 0;font-size:14.5px;color:var(--engrave-2);line-height:1.5}
+.rows b{display:block;font-size:9.5px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:var(--engrave-3)}
+.acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(138px,1fr));gap:8px;margin-top:22px}
+.acts a{display:flex;align-items:center;justify-content:center;min-height:48px;border:1px solid rgba(78,58,20,.5);color:var(--engrave);text-decoration:none;font-size:11px;letter-spacing:.18em;text-transform:uppercase;text-align:center;padding:0 8px;box-shadow:inset 0 1px 0 rgba(255,246,222,.5)}
+.acts a:hover{background:rgba(255,246,222,.45)}
+.acts a.solid{background:#3A2A0E;color:var(--b-1);border-color:#3A2A0E;box-shadow:none}
+.acts a.solid:hover{background:#503A14;color:var(--b-hi)}
+.note{margin-top:20px;font-size:11px;color:var(--engrave-3);line-height:1.7;text-align:center}
+.sig{text-align:center;color:var(--b-4);font-size:10px;letter-spacing:.24em;text-transform:uppercase;padding-top:24px}
+
+/* ---------- detay ---------- */
+.sheet{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center}
+@media(min-width:640px){.sheet{align-items:center}}
+.sheet .bd{position:absolute;inset:0;background:rgba(10,7,4,.8)}
+.card{position:relative;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;background:var(--plate);box-shadow:var(--plate-edge);padding:0 0 26px;text-align:center}
+.card .x{position:absolute;inset-inline-end:12px;top:12px;width:32px;height:32px;background:#3A2A0E;color:var(--b-1);font-size:16px;line-height:1;z-index:2}
+.card .pad{padding:24px 22px 0}
+.card .ct{font-size:10px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:var(--engrave-3)}
+.card h3{font-size:24px;margin:10px 0 0}
+.card .ds{color:var(--engrave-2);font-size:14.5px;margin-top:12px;line-height:1.6}
+.card .mot{display:flex;justify-content:center;color:var(--engrave-2);opacity:.45;margin:20px 0 6px}
+.meta{display:grid;gap:16px}
+.meta span{display:block;font-size:9.5px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--engrave-3);margin-bottom:3px}
+.meta b{font-family:var(--display);font-weight:600;font-size:25px;color:var(--engrave);font-variant-numeric:tabular-nums}
+.meta b.al{font-family:var(--body);font-size:14.5px;font-weight:400;color:var(--engrave-2)}
+.warn{margin-top:22px;font-size:10.5px;color:var(--engrave-3);line-height:1.7;padding-inline:24px}
+</style>
+
+<header class="top"><div class="top-in">
+  <span class="cr" id="topCrest"></span>
+  <span class="tt">Osman Gourmet Beydağı</span>
+  <nav class="langs" id="langs" aria-label="Language"></nav>
+</div></header>
+
+<div class="hall">
+  <div class="tray-wrap">
+    <div class="tray">
+      <span class="ring" id="ring"></span>
+      <div class="inner">
+        <div id="logo"></div>
+        <p class="stars">★ ★ ★ ★ ★ &nbsp; 4,7 / 5</p>
+      </div>
+    </div>
+  </div>
+  <p class="caption" id="caption"></p>
+
+  <div class="nav">
+    <label class="seek">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="q" type="search" autocomplete="off" aria-label="Search">
+      <button class="clr" id="clr" type="button" hidden aria-label="Clear">×</button>
+    </label>
+    <nav class="tabs" id="tabs" aria-label="Categories"></nav>
+  </div>
+
+  <main id="list"></main>
+
+  <footer class="foot">
+    <div class="plate">
+      <div id="footBand"></div>
+      <div class="pad">
+        <h3 class="etch" id="infoT"></h3>
+        <div class="rows">
+          <p><b id="lAdr"></b>Binbirdirek, Klodfarer Cd. No:27/B<br>34122 Fatih · İstanbul</p>
+          <p><b id="lTel"></b>(0212) 638 34 44</p>
+          <p><b id="lHrs"></b><span id="hrs"></span></p>
+        </div>
+        <div class="acts" id="acts"></div>
+        <p class="note" id="footnote"></p>
+      </div>
+    </div>
+    <p class="sig">Sultanahmet · İstanbul · Since 2008</p>
+  </footer>
+</div>
+
+<div class="sheet" id="sheet" hidden>
+  <div class="bd" data-close></div>
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="shName">
+    <button class="x" data-close aria-label="Close">×</button>
+    <div id="shBand"></div>
+    <div class="pad">
+      <p class="ct" id="shCat"></p>
+      <h3 class="etch" id="shName"></h3>
+      <p class="ds" id="shDesc"></p>
+      <div class="mot" id="shMot"></div>
+      <div class="meta" id="shMeta"></div>
+    </div>
+    <p class="warn" id="shWarn"></p>
+  </div>
+</div>
+
+<script src="menu-data.js"></script>
+<script src="core.js"></script>
+<script src="brand.js"></script>
+<script>
+(function(){
+  Q.init();
+  var V=window.VENUE, filter="", active="";
+
+  document.getElementById("topCrest").innerHTML=Brand.crest(22);
+  document.getElementById("ring").innerHTML=Brand.rosette(16,300);
+  document.getElementById("logo").innerHTML=Brand.lockup({crest:46});
+  document.getElementById("footBand").innerHTML=Brand.band("rumi",20,"edge");
+  document.getElementById("shBand").innerHTML=Brand.band("rumi",18,"edge");
+
+  var lw=document.getElementById("langs");
+  window.LANGS.forEach(function(l){
+    var b=document.createElement("button");
+    b.type="button"; b.textContent=l.short; b.setAttribute("lang",l.code);
+    b.onclick=function(){Q.setLang(l.code)};
+    lw.appendChild(b);
+  });
+
+  function tabs(){
+    var c=document.getElementById("tabs"); c.innerHTML="";
+    var a=document.createElement("button");
+    a.type="button"; a.textContent=Q.t("all"); a.setAttribute("aria-pressed",active==="");
+    a.onclick=function(){active="";tabs();render();window.scrollTo({top:0,behavior:"smooth"})};
+    c.appendChild(a);
+    window.MENU.forEach(function(cat){
+      var b=document.createElement("button");
+      b.type="button"; b.textContent=Q.L(cat.n); b.setAttribute("aria-pressed",active===cat.id);
+      b.onclick=function(){
+        active=(active===cat.id?"":cat.id); tabs(); render();
+        var el=document.getElementById("p-"+cat.id);
+        if(el) el.scrollIntoView({behavior:"smooth",block:"start"});
+      };
+      c.appendChild(b);
+    });
+  }
+
+  function render(){
+    var data=Q.search(filter);
+    if(active) data=data.filter(function(c){return c.id===active});
+    var out="";
+    if(!data.length) out='<div class="plate"><p class="empty">'+Q.esc(Q.t("empty"))+'</p></div>';
+    data.forEach(function(cat){
+      out+='<section class="plate" id="p-'+cat.id+'">'+Brand.band("rumi",20,"edge")+'<div class="pad">'+
+        '<div class="plate-h"><span class="mot">'+Brand.motif(Brand.motifFor(cat.id),86)+'</span>'+
+        '<h2 class="etch">'+Q.esc(Q.L(cat.n))+'</h2>'+
+        '<p class="sub">'+cat.items.length+' '+Q.esc(Q.t("items"))+'</p>'+
+        '<div class="div"><i></i>'+Brand.motif("rumi",14)+'<i></i></div></div>';
+      cat.items.forEach(function(it){
+        var bs="";
+        (it.t||[]).forEach(function(tg){
+          var cls=tg==="spicy"?" hot":(tg==="chef"?" chef":"");
+          bs+='<span class="bdg'+cls+'">'+Q.esc(Q.tag(tg))+'</span>';
+        });
+        if(it.k) bs+='<span class="kcal">~'+it.k+' '+Q.esc(Q.t("kcal"))+'</span>';
+        out+='<button class="item" type="button" data-id="'+it._id+'">'+
+          '<span class="nm">'+Q.esc(Q.L(it.i))+'</span>'+
+          '<span class="pr'+(it.p===null?' ask':'')+'">'+Q.esc(Q.price(it.p))+'</span>'+
+          (it.d?'<span class="ds">'+Q.esc(Q.L(it.d))+'</span>':'')+
+          (bs?'<span class="bs">'+bs+'</span>':'')+'</button>';
+      });
+      out+='</div></section>';
+    });
+    document.getElementById("list").innerHTML=out;
+  }
+
+  function texts(){
+    document.getElementById("caption").textContent=Q.L(V.tagline)+" · "+Q.L(V.district);
+    document.getElementById("q").placeholder=Q.t("search");
+    document.getElementById("infoT").textContent=Q.t("info");
+    document.getElementById("lAdr").textContent=Q.t("address");
+    document.getElementById("lTel").textContent=Q.t("phone");
+    document.getElementById("lHrs").textContent=Q.t("hours");
+    document.getElementById("hrs").textContent=Q.L(V.hours);
+    document.getElementById("footnote").textContent=Q.t("calNote")+" "+Q.t("allergenNote");
+    document.getElementById("acts").innerHTML=
+      '<a class="solid" href="tel:'+V.phone.replace(/\s/g,"")+'">'+Q.esc(Q.t("call"))+'</a>'+
+      '<a href="'+V.directions+'" target="_blank" rel="noopener">'+Q.esc(Q.t("directions"))+'</a>'+
+      '<a href="https://wa.me/'+V.whatsapp+'" target="_blank" rel="noopener">'+Q.esc(Q.t("whatsapp"))+'</a>'+
+      '<a href="'+V.reservation+'" target="_blank" rel="noopener">'+Q.esc(Q.t("reserve"))+'</a>';
+    Array.prototype.forEach.call(lw.children,function(b,i){
+      b.setAttribute("aria-pressed", window.LANGS[i].code===Q.lang);
+    });
+  }
+
+  var sheet=document.getElementById("sheet");
+  function open(id){
+    var it=Q.find(id); if(!it) return;
+    document.getElementById("shCat").textContent=Q.L(it._cat.n);
+    document.getElementById("shName").textContent=Q.L(it.i);
+    var d=document.getElementById("shDesc");
+    d.textContent=it.d?Q.L(it.d):""; d.style.display=it.d?"":"none";
+    document.getElementById("shMot").innerHTML=Brand.motif(Brand.motifFor(it._cat.id),32);
+    var al=(it.a&&it.a.length)?it.a.map(Q.allergen).join(" · "):Q.t("noAllergen");
+    var m='<div><span>'+Q.esc(Q.t("menu"))+'</span><b>'+Q.esc(Q.price(it.p))+'</b></div>';
+    if(it.k) m+='<div><span>'+Q.esc(Q.t("kcal"))+' · '+Q.esc(Q.t("approx"))+'</span><b>'+it.k+'</b></div>';
+    m+='<div><span>'+Q.esc(Q.t("allergens"))+'</span><b class="al">'+Q.esc(al)+'</b></div>';
+    document.getElementById("shMeta").innerHTML=m;
+    document.getElementById("shWarn").textContent=Q.t("calNote")+" "+Q.t("allergenNote");
+    sheet.hidden=false; document.body.style.overflow="hidden";
+    sheet.querySelector(".x").focus();
+  }
+  function close(){ sheet.hidden=true; document.body.style.overflow=""; }
+  sheet.addEventListener("click",function(e){ if(e.target.closest("[data-close]")) close(); });
+  document.addEventListener("keydown",function(e){ if(e.key==="Escape"&&!sheet.hidden) close(); });
+  document.getElementById("list").addEventListener("click",function(e){
+    var b=e.target.closest(".item"); if(b) open(b.dataset.id);
+  });
+  var qi=document.getElementById("q"), clr=document.getElementById("clr");
+  qi.addEventListener("input",function(e){ filter=e.target.value; active=""; clr.hidden=!filter; tabs(); render(); });
+  clr.addEventListener("click",function(){ qi.value=""; filter=""; clr.hidden=true; tabs(); render(); qi.focus(); });
+
+  Q.onLang(function(){ texts(); tabs(); render(); });
+  texts(); tabs(); render();
+})();
+</script>

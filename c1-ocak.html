@@ -1,0 +1,339 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ocak Başı</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap">
+<style>
+:root{
+  --live:14;
+  --paper:#FDF6E8; --paper-2:#F5EAD3; --ink:#140F0B; --ink-2:#4B4036; --muted:#847463;
+  --line:#140F0B;
+  --hot:hsl(var(--live) 74% 46%);
+  --hot-dk:hsl(var(--live) 74% 30%);
+  --hot-soft:hsl(var(--live) 74% 92%);
+  --display:"Anton",Impact,sans-serif;
+  --body:"DM Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3{margin:0;font-family:var(--display);font-weight:400;text-transform:uppercase;line-height:.92;letter-spacing:.005em;text-wrap:balance}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+[hidden]{display:none!important}
+.hold{max-width:760px;margin:0 auto;padding-inline:16px}
+
+/* çizim stilleri */
+.dish .fl{fill:var(--d-fill,#fff);stroke:var(--d-line,var(--ink));stroke-width:4.5;stroke-linejoin:round}
+.dish .st{fill:none;stroke:var(--d-line,var(--ink));stroke-width:4.5;stroke-linecap:round;stroke-linejoin:round}
+.dish .dot{fill:var(--d-line,var(--ink))}
+
+/* ---------- logo ---------- */
+.lk{display:block;text-align:center;line-height:1}
+.lk-orn{display:block;color:var(--hot)}
+.lk-word{display:flex;align-items:flex-start;justify-content:center;gap:5px;margin-top:10px}
+.lk-main{font-family:var(--display);font-size:3.1em;letter-spacing:-.01em;color:var(--ink)}
+.lk-stack{display:flex;flex-direction:column;gap:1px;padding-top:.3em}
+.lk-stack i{font-style:normal;font-family:var(--display);font-size:.72em;letter-spacing:.02em;color:var(--ink)}
+.lk-since{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:11px;font-size:.5em;font-weight:700;letter-spacing:.24em;color:var(--hot);font-family:var(--body)}
+.lk-since i{display:block;width:22px;height:3px;background:var(--hot)}
+.lk-sub{display:block;margin-top:10px;font-size:.46em;font-weight:700;letter-spacing:.2em;color:var(--muted);font-family:var(--body)}
+.lk.inv .lk-main,.lk.inv .lk-stack i{color:var(--paper)}
+.lk.inv .lk-orn{color:var(--paper)}
+
+/* ---------- üst ---------- */
+.top{position:sticky;top:0;z-index:40;background:var(--hot);border-bottom:4px solid var(--line);transition:background .45s ease}
+.top-in{display:flex;align-items:center;gap:11px;max-width:760px;margin:0 auto;padding:9px 16px}
+.top .cr{color:var(--paper);display:flex;flex:none}
+.top .tt{flex:1;font-family:var(--display);font-size:16px;color:var(--paper);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.langs{display:flex;gap:3px;flex:none}
+.langs button{width:32px;height:30px;font-size:11px;font-weight:700;color:var(--paper);border:2px solid rgba(255,255,255,.45)}
+.langs button[aria-pressed=true]{background:var(--paper);color:var(--ink);border-color:var(--paper)}
+
+/* ---------- kapak ---------- */
+.hero{padding-block:34px 28px;text-align:center;position:relative;overflow:hidden;border-bottom:4px solid var(--line)}
+.hero .swirl{position:absolute;inset-inline:-40px;bottom:-40px;display:flex;justify-content:space-between;pointer-events:none;opacity:.14;color:var(--hot)}
+.hero .lk{font-size:clamp(13px,4vw,19px);position:relative}
+.hero .chips{display:flex;justify-content:center;flex-wrap:wrap;gap:7px;margin-top:22px;position:relative}
+.hero .chip{border:3px solid var(--line);padding:5px 11px;font-size:12px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;font-variant-numeric:tabular-nums;background:var(--paper)}
+.hero .chip.on{background:var(--line);color:var(--paper)}
+
+/* ---------- arama + raylar ---------- */
+.tools{position:sticky;top:51px;z-index:35;background:var(--paper);border-bottom:4px solid var(--line);padding-block:11px}
+.seek{display:flex;align-items:center;gap:10px;border:3px solid var(--line);background:#fff;padding:0 12px}
+.seek svg{flex:none}
+.seek input{flex:1;background:none;border:0;font:inherit;font-weight:500;font-size:16px;color:var(--ink);padding:11px 0;min-width:0}
+.seek input::placeholder{color:var(--muted);font-weight:400}
+.seek .clr{font-size:19px;line-height:1;width:26px;height:26px;color:var(--muted)}
+.seek .clr[hidden]{display:none}
+.rail{display:flex;gap:6px;overflow-x:auto;margin-top:10px;scrollbar-width:none}
+.rail::-webkit-scrollbar{display:none}
+.rail button{
+  flex:none;display:flex;align-items:center;gap:7px;padding:6px 12px 6px 8px;
+  border:3px solid var(--line);font-size:12.5px;font-weight:700;white-space:nowrap;min-height:36px;
+  background:var(--paper);
+}
+.rail button .sw{width:14px;height:14px;border:2px solid var(--line);flex:none}
+.rail button[aria-pressed=true]{background:var(--line);color:var(--paper)}
+
+/* ---------- kategori bloğu ---------- */
+.block{scroll-margin-top:150px}
+.slab{position:relative;overflow:hidden;border-bottom:4px solid var(--line);padding-block:20px 0}
+.slab .in{display:flex;align-items:flex-end;gap:14px;max-width:760px;margin:0 auto;padding:0 16px}
+.slab h2{flex:1;font-size:clamp(30px,10vw,60px);color:var(--paper);word-break:break-word}
+.slab .n{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.75);padding-bottom:8px;white-space:nowrap}
+.slab .art{display:block;margin:-8px auto -14px;position:relative}
+.slab .grain{position:absolute;inset:0;pointer-events:none;opacity:.18;
+  background-image:radial-gradient(circle at 1px 1px,rgba(0,0,0,.5) 1px,transparent 1.6px);background-size:10px 10px}
+
+.items{padding-block:4px 26px}
+.item{display:grid;grid-template-columns:1fr auto;gap:3px 14px;width:100%;text-align:start;padding:15px 0;border-bottom:2px solid var(--paper-2)}
+.item:last-child{border-bottom:0}
+.item .nm{font-size:17px;font-weight:700;line-height:1.28}
+.item .pr{grid-row:1;grid-column:2;font-family:var(--display);font-size:20px;font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.1;padding-top:1px}
+.item .pr.ask{font-family:var(--body);font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding-top:5px}
+.item .ds{grid-column:1;font-size:13.5px;color:var(--ink-2);line-height:1.45;max-width:50ch}
+.item .bs{grid-column:1;display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;align-items:center}
+.item:hover .nm{text-decoration:underline;text-decoration-thickness:3px;text-underline-offset:3px}
+.bdg{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border:2.5px solid var(--line);padding:1.5px 7px}
+.bdg.hot{background:var(--line);color:var(--paper)}
+.bdg.chef{background:#FFD93D}
+.kcal{font-size:11.5px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.empty{padding:70px 0;text-align:center;font-family:var(--display);font-size:22px;color:var(--muted)}
+
+/* ---------- alt ---------- */
+.foot{background:var(--line);color:var(--paper);border-top:4px solid var(--line);padding-block:32px 40px}
+.foot h3{font-size:30px;color:var(--hot)}
+.rows{display:grid;gap:14px;margin-top:18px}
+.rows p{margin:0;font-size:15px;color:#DCCFBB;line-height:1.5}
+.rows b{display:block;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#8B7C68;margin-bottom:2px}
+.acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:24px}
+.acts a{display:flex;align-items:center;justify-content:center;min-height:54px;border:3px solid var(--paper);text-decoration:none;font-size:13px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;text-align:center;padding:0 10px}
+.acts a:hover{background:var(--paper);color:var(--line)}
+.acts a.solid{background:var(--hot);border-color:var(--hot)}
+.acts a.solid:hover{background:var(--paper);border-color:var(--paper);color:var(--line)}
+.note{margin-top:24px;font-size:11.5px;color:#8B7C68;line-height:1.7}
+
+/* ---------- detay ---------- */
+.sheet{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center}
+@media(min-width:640px){.sheet{align-items:center}}
+.sheet .bd{position:absolute;inset:0;background:rgba(20,15,11,.72)}
+.card{position:relative;width:100%;max-width:490px;max-height:88vh;overflow-y:auto;background:var(--paper);border:4px solid var(--line);border-bottom:0;padding:0 0 28px}
+@media(min-width:640px){.card{border-bottom:4px solid var(--line)}}
+.card .x{position:absolute;inset-inline-end:12px;top:12px;width:38px;height:38px;border:3px solid var(--line);background:var(--paper);font-size:18px;font-weight:700;line-height:1;z-index:3}
+.card .head{padding:20px 20px 0;border-bottom:4px solid var(--line);position:relative;overflow:hidden}
+.card .head .art{display:block;margin:6px auto -10px}
+.card .ct{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--paper);opacity:.85}
+.card h3{font-size:26px;color:var(--paper);margin:8px 0 0;padding-inline-end:44px}
+.card .pad{padding:20px 20px 0}
+.card .ds{font-size:14.5px;color:var(--ink-2);line-height:1.6}
+.meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}
+.meta div{border:3px solid var(--line);padding:11px 13px}
+.meta div:last-child{grid-column:1/-1}
+.meta span{display:block;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.meta b{display:block;font-family:var(--display);font-size:24px;margin-top:5px;font-variant-numeric:tabular-nums}
+.meta b.al{font-family:var(--body);font-size:14px;font-weight:700;text-transform:none;line-height:1.4}
+.warn{margin-top:18px;font-size:11.5px;color:var(--muted);line-height:1.6;padding-inline:20px}
+</style>
+
+<header class="top"><div class="top-in">
+  <span class="cr" id="topCrest"></span>
+  <span class="tt">Osman Gourmet</span>
+  <nav class="langs" id="langs" aria-label="Language"></nav>
+</div></header>
+
+<section class="hero">
+  <span class="swirl" id="swirl"></span>
+  <div class="hold">
+    <div id="logo"></div>
+    <div class="chips">
+      <span class="chip on">★ 4,7</span>
+      <span class="chip">1.250 <span id="rv"></span></span>
+      <span class="chip">08:00 – 02:00</span>
+      <span class="chip" id="cnt"></span>
+    </div>
+  </div>
+</section>
+
+<div class="tools"><div class="hold">
+  <label class="seek">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input id="q" type="search" autocomplete="off" aria-label="Search">
+    <button class="clr" id="clr" type="button" hidden aria-label="Clear">×</button>
+  </label>
+  <nav class="rail" id="rail" aria-label="Categories"></nav>
+</div></div>
+
+<main id="list"></main>
+
+<footer class="foot"><div class="hold">
+  <h3 id="infoT"></h3>
+  <div class="rows">
+    <p><b id="lAdr"></b>Binbirdirek, Klodfarer Cd. No:27/B<br>34122 Fatih / İstanbul</p>
+    <p><b id="lTel"></b>(0212) 638 34 44</p>
+    <p><b id="lHrs"></b><span id="hrs"></span></p>
+  </div>
+  <div class="acts" id="acts"></div>
+  <p class="note" id="footnote"></p>
+</div></footer>
+
+<div class="sheet" id="sheet" hidden>
+  <div class="bd" data-close></div>
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="shName">
+    <button class="x" data-close aria-label="Close">×</button>
+    <div class="head" id="shHead">
+      <p class="ct" id="shCat"></p>
+      <h3 id="shName"></h3>
+      <span id="shArt"></span>
+    </div>
+    <div class="pad">
+      <p class="ds" id="shDesc"></p>
+      <div class="meta" id="shMeta"></div>
+    </div>
+    <p class="warn" id="shWarn"></p>
+  </div>
+</div>
+
+<script src="menu-data.js"></script>
+<script src="core.js"></script>
+<script src="brand.js"></script>
+<script>
+(function(){
+  Q.init();
+  var V=window.VENUE, filter="", active="";
+  var HUE={breakfast:36,salads:96,kebab:12,ottoman:280,casserole:22,steaks:344,seafood:194,
+           pide:44,wraps:156,pasta:6,desserts:320,hot:28,soft:206,mocktails:142,cocktails:264,
+           beer:42,spirits:218};
+  function hue(id){ return HUE[id]!==undefined?HUE[id]:14; }
+  function fill(id){ return "hsl("+hue(id)+" 74% 46%)"; }
+  function soft(id){ return "hsl("+hue(id)+" 76% 84%)"; }
+
+  document.getElementById("topCrest").innerHTML=Brand.crest(24);
+  document.getElementById("logo").innerHTML=Brand.lockup({crest:58});
+  document.getElementById("swirl").innerHTML=Brand.dish("skewer",180)+Brand.dish("pide",180);
+
+  var lw=document.getElementById("langs");
+  window.LANGS.forEach(function(l){
+    var b=document.createElement("button");
+    b.type="button"; b.textContent=l.short; b.setAttribute("lang",l.code);
+    b.onclick=function(){Q.setLang(l.code)};
+    lw.appendChild(b);
+  });
+
+  function rail(){
+    var c=document.getElementById("rail"); c.innerHTML="";
+    var a=document.createElement("button");
+    a.type="button"; a.textContent=Q.t("all"); a.setAttribute("aria-pressed",active==="");
+    a.onclick=function(){active="";rail();render();window.scrollTo({top:0,behavior:"smooth"})};
+    c.appendChild(a);
+    window.MENU.forEach(function(cat){
+      var b=document.createElement("button"); b.type="button";
+      b.innerHTML='<span class="sw" style="background:'+fill(cat.id)+'"></span><span>'+Q.esc(Q.L(cat.n))+'</span>';
+      b.setAttribute("aria-pressed",active===cat.id);
+      b.onclick=function(){
+        active=(active===cat.id?"":cat.id); rail(); render();
+        var el=document.getElementById("b-"+cat.id);
+        if(el) el.scrollIntoView({behavior:"smooth",block:"start"});
+      };
+      c.appendChild(b);
+    });
+  }
+
+  function render(){
+    var data=Q.search(filter);
+    if(active) data=data.filter(function(c){return c.id===active});
+    var out="";
+    if(!data.length) out='<p class="empty">'+Q.esc(Q.t("empty"))+'</p>';
+    data.forEach(function(cat){
+      var h=hue(cat.id);
+      out+='<section class="block" id="b-'+cat.id+'" data-hue="'+h+'">'+
+        '<div class="slab" style="background:'+fill(cat.id)+'">'+
+          '<span class="grain"></span>'+
+          '<div class="in"><h2>'+Q.esc(Q.L(cat.n))+'</h2>'+
+          '<span class="n">'+cat.items.length+' '+Q.esc(Q.t("items"))+'</span></div>'+
+          '<span class="art" style="--d-fill:'+soft(cat.id)+'">'+Brand.dish(Brand.dishFor(cat.id),120)+'</span>'+
+        '</div><div class="items"><div class="hold">';
+      cat.items.forEach(function(it){
+        var bs="";
+        (it.t||[]).forEach(function(tg){
+          var cls=tg==="spicy"?" hot":(tg==="chef"?" chef":"");
+          bs+='<span class="bdg'+cls+'">'+Q.esc(Q.tag(tg))+'</span>';
+        });
+        if(it.k) bs+='<span class="kcal">~'+it.k+' '+Q.esc(Q.t("kcal"))+'</span>';
+        out+='<button class="item" type="button" data-id="'+it._id+'">'+
+          '<span class="nm">'+Q.esc(Q.L(it.i))+'</span>'+
+          '<span class="pr'+(it.p===null?' ask':'')+'" style="color:hsl('+h+' 74% 34%)">'+Q.esc(Q.price(it.p))+'</span>'+
+          (it.d?'<span class="ds">'+Q.esc(Q.L(it.d))+'</span>':'')+
+          (bs?'<span class="bs">'+bs+'</span>':'')+'</button>';
+      });
+      out+='</div></div></section>';
+    });
+    document.getElementById("list").innerHTML=out;
+    observe();
+  }
+
+  function texts(){
+    document.getElementById("rv").textContent=Q.t("reviews");
+    document.getElementById("cnt").textContent=Q.count()+" "+Q.t("items");
+    document.getElementById("hrs").textContent=Q.L(V.hours);
+    document.getElementById("q").placeholder=Q.t("search");
+    document.getElementById("infoT").textContent=Q.t("info");
+    document.getElementById("lAdr").textContent=Q.t("address");
+    document.getElementById("lTel").textContent=Q.t("phone");
+    document.getElementById("lHrs").textContent=Q.t("hours");
+    document.getElementById("footnote").textContent=Q.t("calNote")+" "+Q.t("allergenNote");
+    document.getElementById("acts").innerHTML=
+      '<a class="solid" href="tel:'+V.phone.replace(/\s/g,"")+'">'+Q.esc(Q.t("call"))+'</a>'+
+      '<a href="'+V.directions+'" target="_blank" rel="noopener">'+Q.esc(Q.t("directions"))+'</a>'+
+      '<a href="https://wa.me/'+V.whatsapp+'" target="_blank" rel="noopener">'+Q.esc(Q.t("whatsapp"))+'</a>'+
+      '<a href="'+V.reservation+'" target="_blank" rel="noopener">'+Q.esc(Q.t("reserve"))+'</a>';
+    Array.prototype.forEach.call(lw.children,function(b,i){
+      b.setAttribute("aria-pressed", window.LANGS[i].code===Q.lang);
+    });
+  }
+
+  var sheet=document.getElementById("sheet");
+  function open(id){
+    var it=Q.find(id); if(!it) return;
+    var h=hue(it._cat.id);
+    document.getElementById("shHead").style.background=fill(it._cat.id);
+    document.getElementById("shCat").textContent=Q.L(it._cat.n);
+    document.getElementById("shName").textContent=Q.L(it.i);
+    var art=document.getElementById("shArt");
+    art.style.setProperty("--d-fill", soft(it._cat.id));
+    art.innerHTML=Brand.dish(Brand.dishFor(it._cat.id),96);
+    var d=document.getElementById("shDesc");
+    d.textContent=it.d?Q.L(it.d):""; d.style.display=it.d?"":"none";
+    var al=(it.a&&it.a.length)?it.a.map(Q.allergen).join(" · "):Q.t("noAllergen");
+    document.getElementById("shMeta").innerHTML=
+      '<div><span>'+Q.esc(Q.t("menu"))+'</span><b style="color:hsl('+h+' 74% 34%)">'+Q.esc(Q.price(it.p))+'</b></div>'+
+      '<div><span>'+Q.esc(Q.t("kcal"))+'</span><b>'+(it.k?"~"+it.k:"—")+'</b></div>'+
+      '<div><span>'+Q.esc(Q.t("allergens"))+'</span><b class="al">'+Q.esc(al)+'</b></div>';
+    document.getElementById("shWarn").textContent=Q.t("calNote")+" "+Q.t("allergenNote");
+    sheet.hidden=false; document.body.style.overflow="hidden";
+    sheet.querySelector(".x").focus();
+  }
+  function close(){ sheet.hidden=true; document.body.style.overflow=""; }
+  sheet.addEventListener("click",function(e){ if(e.target.closest("[data-close]")) close(); });
+  document.addEventListener("keydown",function(e){ if(e.key==="Escape"&&!sheet.hidden) close(); });
+  document.getElementById("list").addEventListener("click",function(e){
+    var b=e.target.closest(".item"); if(b) open(b.dataset.id);
+  });
+  var qi=document.getElementById("q"), clr=document.getElementById("clr");
+  qi.addEventListener("input",function(e){ filter=e.target.value; active=""; clr.hidden=!filter; rail(); render(); });
+  clr.addEventListener("click",function(){ qi.value=""; filter=""; clr.hidden=true; rail(); render(); qi.focus(); });
+
+  /* kaydırdıkça sayfa rengi o kategoriye döner */
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      if(e.isIntersecting){
+        document.documentElement.style.setProperty("--live", e.target.dataset.hue);
+      }
+    });
+  },{rootMargin:"-150px 0px -60% 0px"});
+  function observe(){ document.querySelectorAll(".block").forEach(function(s){io.observe(s)}); }
+
+  Q.onLang(function(){ texts(); rail(); render(); });
+  texts(); rail(); render();
+})();
+</script>
