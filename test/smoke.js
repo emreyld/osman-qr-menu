@@ -27,6 +27,10 @@ const fs=require('fs');
 const base=require('path').join(__dirname,'..')+'/';
 eval(fs.readFileSync(base+'data/menu-data.js','utf8'));
 eval(fs.readFileSync(base+'app/db.js','utf8'));
+const _ls={};
+global.localStorage={getItem:k=>(k in _ls?_ls[k]:null),setItem:(k,v)=>{_ls[k]=String(v)},removeItem:k=>{delete _ls[k]}};
+global.window.localStorage=global.localStorage;
+eval(fs.readFileSync(base+'app/auth.js','utf8'));
 
 let pass=0, fail=0;
 const ok=(c,m)=>{ c?pass++:fail++; console.log((c?'  OK  ':'  HATA')+'  '+m); };
@@ -146,6 +150,55 @@ Store.init()
    ok(r.items.length===1 && r.items[0].name==='Çay','iptal edilen urun raporda yok');
    return Store.wipe();
  })
+ .then(()=>{
+   console.log('\n  --- hesaplar ve yetkiler ---');
+   Auth.init();
+   ok(Auth.needsSetup(),'ilk acilis: kurulum gerekiyor');
+   return Auth.setup({name:'Turgay',username:'Turgay',password:'1234'});
+ })
+ .then(()=>{
+   ok(!Auth.needsSetup(),'kurulum bitti');
+   ok(!!Auth.current(),'otomatik giris yapildi');
+   ok(Auth.isAdmin(),'sahip yonetici');
+   ok(Auth.can('manage') && Auth.can('report') && Auth.can('discount'),'yonetici tum yetkilere sahip');
+   Auth.logout();
+   ok(!Auth.current(),'cikis yapildi');
+   return Auth.login('TURGAY','1234');
+ })
+ .then(()=>{
+   ok(!!Auth.current(),'buyuk harfle kullanici adi da calisiyor');
+   return Auth.login('turgay','yanlis').then(()=>{ok(false,'yanlis parola gecti!')},()=>{ok(true,'yanlis parola reddedildi')});
+ })
+ .then(()=>Auth.create({name:'Ali',username:'ali',password:'1234',role:'waiter'}))
+ .then(w=>{
+   window._w=w;
+   ok(Auth.staff().length===1,'garson eklendi');
+   return Auth.create({name:'Veli',username:'ali',password:'1234',role:'waiter'})
+     .then(()=>{ok(false,'ayni kullanici adi gecti!')},()=>{ok(true,'ayni kullanici adi reddedildi')});
+ })
+ .then(()=>Auth.create({name:'Kisa',username:'kisa',password:'12',role:'waiter'})
+   .then(()=>{ok(false,'kisa parola gecti!')},()=>{ok(true,'kisa parola reddedildi')}))
+ .then(()=>Auth.login('ali','1234'))
+ .then(()=>{
+   ok(!Auth.isAdmin(),'garson yonetici degil');
+   ok(Auth.can('order') && Auth.can('close'),'garson siparis alip hesap kapatabilir');
+   ok(!Auth.can('discount'),'garson varsayilan olarak ikram yapamaz');
+   ok(!Auth.can('voidItem'),'garson varsayilan olarak iptal edemez');
+   ok(!Auth.can('report'),'garson gun sonu raporunu goremez');
+   ok(!Auth.can('manage'),'garson yonetim panelini goremez');
+   var p=Auth.defaultPerms('waiter'); p.discount=true;
+   return Auth.update(window._w.id,{perms:p});
+ })
+ .then(()=>{
+   ok(Auth.can('discount'),'yetki verilince garson ikram yapabiliyor');
+   ok(!Auth.can('voidItem'),'digger yetkiler degismedi');
+   return Auth.update(window._w.id,{active:false});
+ })
+ .then(()=>{ Auth.logout(); return Auth.login('ali','1234')
+   .then(()=>{ok(false,'kapali hesap girdi!')},()=>{ok(true,'kapali hesap giremiyor')}); })
+ .then(()=>Auth.login('turgay','1234'))
+ .then(()=>Auth.remove(Auth.current().id)
+   .then(()=>{ok(false,'son yonetici silindi!')},()=>{ok(true,'son yonetici silinemiyor')}))
  .then(()=>{
    console.log('\n  '+pass+' gecti, '+fail+' kaldi');
    process.exit(fail?1:0);

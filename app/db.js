@@ -25,6 +25,10 @@
     tables: null,                  // açılışta doldurulur
     waiters: ["Ahmet", "Mehmet", "Ayşe"],
     waiter: "Ahmet",
+    users: [],                     // hesaplar (bkz. auth.js)
+    menuOverrides: {},             // { mid: {price, name, hidden} }
+    customItems: [],               // işletmenin eklediği ürünler
+    venue: "Osman Gourmet Beydağı",
     soldOut: [],                   // bugün tükenen ürünler (mid listesi)
     seq: { day: 0, n: 0 },         // günlük adisyon numarası
     kdv: 10
@@ -104,21 +108,34 @@
   }
 
   /* ---------- menü düzleştirme ---------- */
-  function flatMenu() {
+  function flatMenu(includeHidden) {
+    var ov = (settings && settings.menuOverrides) || {};
     var out = [];
     (window.MENU || []).forEach(function (cat) {
       cat.items.forEach(function (it, i) {
+        var mid = cat.id + "-" + i;
+        var o = ov[mid] || {};
+        if (o.hidden && !includeHidden) return;
         out.push({
-          mid: cat.id + "-" + i,
-          cat: cat.id,
-          catName: cat.n.tr,
-          name: it.i.tr,
+          mid: mid, cat: cat.id, catName: cat.n.tr,
+          name: o.name || it.i.tr,
           nameEn: it.i.en,
           desc: it.d ? it.d.tr : "",
-          price: it.p,
+          price: (o.price !== undefined && o.price !== null) ? o.price : it.p,
+          basePrice: it.p,
           kcal: it.k,
-          tags: it.t || []
+          tags: it.t || [],
+          hidden: !!o.hidden,
+          edited: o.price !== undefined || !!o.name
         });
+      });
+    });
+    ((settings && settings.customItems) || []).forEach(function (ci) {
+      if (ci.hidden && !includeHidden) return;
+      out.push({
+        mid: ci.mid, cat: ci.cat, catName: ci.catName, name: ci.name,
+        nameEn: "", desc: "", price: ci.price, basePrice: ci.price,
+        kcal: ci.kcal || 0, tags: [], hidden: !!ci.hidden, custom: true
       });
     });
     return out;
@@ -176,6 +193,10 @@
         }
         if (!settings.tables || !settings.tables.length) settings.tables = defaultTables();
         if (!settings.waiters) settings.waiters = ["Ahmet", "Mehmet", "Ayşe"];
+        if (!settings.users) settings.users = [];
+        if (!settings.menuOverrides) settings.menuOverrides = {};
+        if (!settings.customItems) settings.customItems = [];
+        if (!settings.venue) settings.venue = "Osman Gourmet Beydağı";
         if (!settings.soldOut) settings.soldOut = [];
         if (!settings.seq) settings.seq = { day: 0, n: 0 };
       }).then(function () { return Store; });
@@ -303,6 +324,70 @@
 
     readyTables: function () {
       return Store.openOrders().filter(function (o) { return Store.readyCount(o) > 0; });
+    },
+
+    /* ---------- masa yönetimi ---------- */
+    saveTables: function (list) {
+      settings.tables = list;
+      return put("meta", { k: "settings", v: settings }).then(function () { broadcast("tables"); });
+    },
+    addTable: function (name, zone, seats) {
+      var id = "t_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+      settings.tables.push({ id: id, name: String(name), zone: zone, seats: +seats || 4 });
+      return put("meta", { k: "settings", v: settings }).then(function () { broadcast("tables"); });
+    },
+    updateTable: function (id, patch) {
+      var t = Store.table(id); if (!t) return Promise.resolve();
+      if (patch.name !== undefined) t.name = String(patch.name);
+      if (patch.zone !== undefined) t.zone = patch.zone;
+      if (patch.seats !== undefined) t.seats = +patch.seats || 4;
+      return put("meta", { k: "settings", v: settings }).then(function () { broadcast("tables"); });
+    },
+    removeTable: function (id) {
+      if (Store.orderByTable(id)) return Promise.reject("masa açık, önce hesabı kapat");
+      settings.tables = settings.tables.filter(function (t) { return t.id !== id; });
+      return put("meta", { k: "settings", v: settings }).then(function () { broadcast("tables"); });
+    },
+
+    /* ---------- menü yönetimi ---------- */
+    categories: function () {
+      return (window.MENU || []).map(function (c) { return { id: c.id, name: c.n.tr }; });
+    },
+    menuAll: function () { return flatMenu(true); },
+    setItemPrice: function (mid, price) {
+      var ci = (settings.customItems || []).filter(function (x) { return x.mid === mid; })[0];
+      if (ci) { ci.price = price; }
+      else {
+        settings.menuOverrides[mid] = settings.menuOverrides[mid] || {};
+        settings.menuOverrides[mid].price = price;
+      }
+      return put("meta", { k: "settings", v: settings }).then(function () { broadcast("menu"); });
+    },
+    setItemHidden: function (mid, hidden) {
+      var ci = (settings.customItems || []).filter(function (x) { return x.mid === mid; })[0];
+      if (ci) { ci.hidden = !!hidden; }
+      else {
+        settings.menuOverrides[mid] = settings.menuOverrides[mid] || {};
+        settings.menuOverrides[mid].hidden = !!hidden;
+      }
+      return put("meta", { k: "settings", v: settings }).then(function () { broadcast("menu"); });
+    },
+    resetItem: function (mid) {
+      delete settings.menuOverrides[mid];
+      return put("meta", { k: "settings", v: settings }).then(function () { broadcast("menu"); });
+    },
+    addItemToMenu: function (catId, name, price) {
+      var cat = (window.MENU || []).filter(function (c) { return c.id === catId; })[0];
+      settings.customItems.push({
+        mid: "x_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+        cat: catId, catName: cat ? cat.n.tr : catId,
+        name: String(name).trim(), price: +price || 0, hidden: false
+      });
+      return put("meta", { k: "settings", v: settings }).then(function () { broadcast("menu"); });
+    },
+    removeCustomItem: function (mid) {
+      settings.customItems = settings.customItems.filter(function (x) { return x.mid !== mid; });
+      return put("meta", { k: "settings", v: settings }).then(function () { broadcast("menu"); });
     },
 
     /* ---------- tükenen ürün ---------- */

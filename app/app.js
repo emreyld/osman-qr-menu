@@ -126,6 +126,74 @@
   }
   var STATE_TEXT = { bos: "Boş", dolu: "Serviste", mutfak: "Mutfakta", hazir: "HAZIR" };
 
+  /* ================= GİRİŞ ================= */
+  var loginErr = "";
+
+  function renderSetup() {
+    return '<div class="gate"><div class="gbox">' +
+      '<div class="glogo">' + ic('<path d="M7 3h10a2 2 0 0 1 2 2v16l-3-2-2 2-2-2-2 2-2-2-3 2V5a2 2 0 0 1 2-2z"/><path d="M9 8h6M9 12h6M9 16h4"/>', 34) + "</div>" +
+      "<h1>Hoş geldin</h1>" +
+      "<p>İşletme sahibi hesabını oluştur. Personel hesaplarını sonra bu hesaptan açacaksın.</p>" +
+      (loginErr ? '<p class="gerr">' + esc(loginErr) + "</p>" : "") +
+      '<label class="field"><input id="cn" type="text" placeholder="Adın soyadın" autocomplete="name"></label>' +
+      '<label class="field"><input id="cu" type="text" placeholder="kullanıcı adı" autocapitalize="none" autocomplete="username"></label>' +
+      '<label class="field"><input id="cp" type="password" placeholder="parola (en az 4 karakter)" autocomplete="new-password"></label>' +
+      '<button class="btn go big wide" id="cOk" type="button">Hesabı oluştur</button>' +
+      "</div></div>";
+  }
+
+  function renderLogin() {
+    return '<div class="gate"><div class="gbox">' +
+      '<div class="glogo">' + ic('<path d="M7 3h10a2 2 0 0 1 2 2v16l-3-2-2 2-2-2-2 2-2-2-3 2V5a2 2 0 0 1 2-2z"/><path d="M9 8h6M9 12h6M9 16h4"/>', 34) + "</div>" +
+      "<h1>" + esc(Store.settings().venue || "Giriş") + "</h1>" +
+      "<p>Kullanıcı adın ve parolanla gir</p>" +
+      (loginErr ? '<p class="gerr">' + esc(loginErr) + "</p>" : "") +
+      '<label class="field"><input id="lu" type="text" placeholder="kullanıcı adı" autocapitalize="none" autocomplete="username"></label>' +
+      '<label class="field"><input id="lp" type="password" placeholder="parola" autocomplete="current-password"></label>' +
+      '<button class="btn go big wide" id="lOk" type="button">Giriş yap</button>' +
+      '<p class="gnote">Bir kez girdikten sonra çıkış yapana kadar açık kalır.</p>' +
+      "</div></div>";
+  }
+
+  /* ================= HESABIM (garson) ================= */
+  function renderMe() {
+    var me = Auth.current();
+    var from = Store.dayStart();
+    var mine = Store.closedBetween(from, Date.now() + 1).filter(function (o) { return o.waiter === me.name; });
+    var tutar = mine.reduce(function (s2, o) { return s2 + (o.totals || Store.totals(o)).total; }, 0);
+    var kisi = mine.reduce(function (s2, o) { return s2 + (o.guests || 0); }, 0);
+    var acik = Store.openOrders().filter(function (o) { return o.waiter === me.name; }).length;
+
+    var h = '<header class="top"><div class="top-in"><div class="ttl"><b>' +
+      esc(Store.settings().venue || "") + "</b></div>" +
+      '<button class="iconbtn" id="meOut" aria-label="Çıkış yap">' +
+      ic('<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 17l-5-5 5-5M5 12h11"/>', 21) +
+      "</button></div></header><div class='wrap'>" +
+      '<div class="bigtitle"><h1>' + esc(me.name) + "</h1><p>Bugünkü satışların</p></div>";
+
+    h += '<div class="hero"><span>Bugün sattığın</span><b class="num">' + money(tutar) + "</b></div>";
+    h += '<div class="rgrid">' +
+      '<div class="stat"><b class="num">' + mine.length + '</b><span>kapattığın adisyon</span></div>' +
+      '<div class="stat"><b class="num">' + acik + '</b><span>açık masan</span></div>' +
+      '<div class="stat"><b class="num">' + kisi + '</b><span>ağırladığın kişi</span></div>' +
+      '<div class="stat"><b class="num">' + (mine.length ? money(Math.round(tutar / mine.length)) : money(0)) +
+      '</b><span>masa ortalaman</span></div></div>';
+
+    if (mine.length) {
+      h += '<div class="panel"><h3>Kapattığın masalar</h3><div class="blist">';
+      mine.sort(function (a, b) { return b.closedAt - a.closedAt; }).slice(0, 10).forEach(function (o) {
+        var t = Store.table(o.tableId);
+        h += '<div class="brow"><span class="n">Masa ' + esc(t ? t.name : o.tableId) +
+          ' <span class="sm">' + clock(o.closedAt) + "</span></span>" +
+          '<span class="v num">' + money((o.totals || Store.totals(o)).total) + "</span></div>";
+      });
+      h += "</div></div>";
+    }
+
+    h += '<div class="acts"><button class="btn plain" id="meOut2" type="button">Çıkış yap</button></div>';
+    return h + "<div style='height:8px'></div></div>";
+  }
+
   /* ================= MASALAR ================= */
   function renderTables() {
     var open = Store.openOrders();
@@ -134,9 +202,9 @@
     var rep = Store.report(Store.dayStart(), Date.now() + 1);
 
     var h = '<header class="top"><div class="top-in">' +
-      '<div class="ttl"><b>Osman Gourmet</b></div>' +
-      '<button class="who" id="btnWho">' + ic(I.person, 18) + "<span>" + esc(Store.settings().waiter) + "</span></button>" +
-      '<button class="iconbtn" id="btnSettings" aria-label="Ayarlar">' + ic(I.gear, 21) + "</button>" +
+      '<div class="ttl"><b>' + esc(Store.settings().venue || "") + '</b></div>' +
+      '<button class="who" id="btnWho">' + ic(I.person, 18) + "<span>" +
+      esc((Auth.current() || {}).name || "") + "</span></button>" +
       "</div></header><div class='wrap'>" +
       '<div class="bigtitle"><h1>Masalar</h1><p>' + open.length + " açık adisyon · " +
       pendingCount() + " ürün mutfakta</p></div>";
@@ -250,7 +318,8 @@
     var primary;
     if (nDraft) primary = '<button class="btn go big" id="btnSend">Mutfağa gönder · ' + nDraft + "</button>";
     else if (nReady) primary = '<button class="btn hot big" id="btnServe">Servis ettim · ' + nReady + "</button>";
-    else primary = '<button class="btn go big" id="btnPay"' + (live(o).length ? "" : " disabled") + ">Hesap</button>";
+    else if (Auth.can("close")) primary = '<button class="btn go big" id="btnPay"' + (live(o).length ? "" : " disabled") + ">Hesap</button>";
+    else primary = '<button class="btn go big" disabled>Hesabı yönetici kapatır</button>';
 
     h += '<div class="bar two"><div class="bar-in">' +
       '<div class="row1">' +
@@ -478,9 +547,30 @@
   /* ================= ÇİZ ================= */
   function render() {
     var html;
+
+    if (Auth.needsSetup()) {
+      app.innerHTML = renderSetup();
+      $("#tabs").innerHTML = "";
+      document.body.classList.remove("hasbar");
+      document.body.dataset.view = "gate";
+      return;
+    }
+    if (!Auth.current()) {
+      app.innerHTML = renderLogin();
+      $("#tabs").innerHTML = "";
+      document.body.classList.remove("hasbar");
+      document.body.dataset.view = "gate";
+      return;
+    }
+
+    if (view === "manage" && !Auth.can("manage")) view = "tables";
+    if (view === "report" && !Auth.can("report")) view = "me";
+
     if (view === "order") html = renderOrder();
     else if (view === "kitchen") html = renderKitchen();
     else if (view === "report") html = renderReport();
+    else if (view === "manage") html = Admin.render();
+    else if (view === "me") html = renderMe();
     else html = renderTables();
 
     app.innerHTML = html + renderPicker();
@@ -493,11 +583,15 @@
     }
 
     var pend = pendingCount(), rdy = Store.readyTables().length;
-    $("#tabs").innerHTML = [
+    var TABS = [
       ["tables", "Masalar", I.tables, rdy],
-      ["kitchen", "Mutfak", I.kitchen, pend],
-      ["report", "Gün sonu", I.report, 0]
-    ].map(function (t) {
+      ["kitchen", "Mutfak", I.kitchen, pend]
+    ];
+    if (Auth.can("report")) TABS.push(["report", "Gün sonu", I.report, 0]);
+    else TABS.push(["me", "Hesabım", I.person, 0]);
+    if (Auth.can("manage")) TABS.push(["manage", "Yönetim", I.gear, 0]);
+    document.body.dataset.tabs = TABS.length;
+    $("#tabs").innerHTML = TABS.map(function (t) {
       var sel = (view === t[0] || (view === "order" && t[0] === "tables"));
       return '<button type="button" data-tab="' + t[0] + '" aria-selected="' + sel + '">' +
         ic(t[2], 24) + "<span>" + t[1] + "</span>" +
@@ -511,22 +605,25 @@
 
   /* ================= AKIŞLAR ================= */
   function whoFlow() {
-    var s = Store.settings();
-    sheet("<h3>Kim servis ediyor?</h3><p class='lead'>Açtığın masalar bu isme yazılır</p>" +
-      '<div class="chips big" id="wChips">' + s.waiters.map(function (w) {
-        return '<button type="button" data-w="' + esc(w) + '" aria-pressed="' + (w === s.waiter) + '">' + esc(w) + "</button>";
-      }).join("") + "</div>" +
-      '<div class="acts"><button class="btn plain" id="wAdd" type="button">+ Garson ekle</button></div>',
+    var me = Auth.current();
+    var so = Store.settings().soldOut.length;
+    sheet("<h3>" + esc(me.name) + "</h3><p class='lead'>@" + esc(me.username) + " · " +
+      (me.role === "admin" ? "işletme sahibi" : "garson") + "</p>" +
+      '<div class="acts">' +
+      '<button class="btn plain" id="wOut2" type="button">Tükenen ürünler (' + so + ")</button>" +
+      '<button class="btn plain" id="wPw" type="button">Parolamı değiştir</button>' +
+      '<button class="btn danger" id="wLogout" type="button">Çıkış yap</button></div>',
       function (c) {
-        c.querySelector("#wChips").onclick = function (e) {
-          var b = e.target.closest("[data-w]"); if (!b) return;
-          Store.saveSettings({ waiter: b.dataset.w }).then(function () { closeSheet(); render(); });
+        c.querySelector("#wOut2").onclick = function () { closeSheet(); soldOutFlow(); };
+        c.querySelector("#wPw").onclick = function () {
+          var pw = prompt("Yeni parola (en az 4 karakter)");
+          if (!pw) return;
+          Auth.setPassword(me.id, pw).then(function () { closeSheet(); toast("Parola değişti"); })
+            .catch(function (m) { toast(m); });
         };
-        c.querySelector("#wAdd").onclick = function () {
-          var n = prompt("Garson adı");
-          if (!n || !n.trim()) return;
-          var ws = s.waiters.slice(); ws.push(n.trim());
-          Store.saveSettings({ waiters: ws, waiter: n.trim() }).then(function () { closeSheet(); render(); });
+        c.querySelector("#wLogout").onclick = function () {
+          if (!confirm("Çıkış yapılsın mı?")) return;
+          closeSheet(); Auth.logout();
         };
       });
   }
@@ -549,7 +646,7 @@
           });
         };
         c.querySelector("#gOk").onclick = function () {
-          Store.openTable(tableId, g).then(function (o) {
+          Store.openTable(tableId, g, (Auth.current() || {}).name).then(function (o) {
             closeSheet(); currentOrder = o.id; view = "order";
             picker = { q: "", cat: "", focus: false };
             render();
@@ -633,12 +730,17 @@
         '<button type="button" id="qm">−</button><b class="num">' + li.qty + "</b>" +
         '<button type="button" id="qp">+</button></div></div>';
     }
-    acts += '<button class="btn plain" id="aPromo" type="button">' +
-      (li.promo ? "İkramı / indirimi değiştir" : "İkram et veya indirim uygula") + "</button>";
+    if (Auth.can("discount")) {
+      acts += '<button class="btn plain" id="aPromo" type="button">' +
+        (li.promo ? "İkramı / indirimi değiştir" : "İkram et veya indirim uygula") + "</button>";
+    }
     if (li.status === "draft") {
       acts += '<button class="btn danger" id="aDel" type="button">Satırı sil</button>';
-    } else if (li.status !== "void") {
+    } else if (li.status !== "void" && Auth.can("voidItem")) {
       acts += '<button class="btn danger" id="aVoid" type="button">İptal et</button>';
+    }
+    if (!Auth.can("discount") && !Auth.can("voidItem") && li.status !== "draft" && li.status !== "ready") {
+      acts += '<p class="lead" style="text-align:center">Bu ürün için yetkin yok, yöneticiye söyle.</p>';
     }
 
     sheet("<h3>" + esc(li.name) + "</h3><p class='lead'>" + li.qty + " adet · " + money(li.price) +
@@ -655,7 +757,8 @@
           qm.onclick = function () { Store.setQty(o.id, lid, li.qty - 1).then(function () { closeSheet(); render(); }); };
           c.querySelector("#qp").onclick = function () { Store.setQty(o.id, lid, li.qty + 1).then(function () { closeSheet(); render(); }); };
         }
-        c.querySelector("#aPromo").onclick = function () { closeSheet(); promoFlow(lid); };
+        var pr = c.querySelector("#aPromo");
+        if (pr) pr.onclick = function () { closeSheet(); promoFlow(lid); };
         var del = c.querySelector("#aDel");
         if (del) del.onclick = function () { Store.removeItem(o.id, lid).then(function () { closeSheet(); render(); }); };
         var vd = c.querySelector("#aVoid");
@@ -854,11 +957,11 @@
             (t.promo ? '<div class="neg"><span>Ürün ikramı</span><b class="num">−' + money(t.promo) + "</b></div>" : "") +
             (t.discount ? '<div class="neg"><span>Adisyon indirimi</span><b class="num">−' + money(t.discount) + "</b></div>" : "") +
             "</div>" : "") +
-        '<p class="cap">Tüm adisyona indirim</p><div class="chips big" id="dc">' +
+        (Auth.can("discount") ? '<p class="cap">Tüm adisyona indirim</p><div class="chips big" id="dc">' +
         '<button type="button" data-d="none" aria-pressed="' + (!disc) + '">Yok</button>' +
         '<button type="button" data-d="p10" aria-pressed="' + (!!disc && disc.type === "percent" && disc.value === 10) + '">%10</button>' +
         '<button type="button" data-d="p20" aria-pressed="' + (!!disc && disc.type === "percent" && disc.value === 20) + '">%20</button>' +
-        '<button type="button" data-d="treat" aria-pressed="' + (!!disc && disc.type === "treat") + '">Tamamen ikram</button></div>' +
+        '<button type="button" data-d="treat" aria-pressed="' + (!!disc && disc.type === "treat") + '">Tamamen ikram</button></div>' : "") +
         '<p class="cap">Nasıl ödedi?</p><div class="acts" id="pc">' +
         '<button class="btn go big" type="button" data-p="kart">Kart ile kapat</button>' +
         '<button class="btn go big" type="button" data-p="nakit">Nakit ile kapat</button>' +
@@ -867,7 +970,8 @@
     }
 
     function mount(c) {
-      c.querySelector("#dc").onclick = function (e) {
+      var dc = c.querySelector("#dc");
+      if (dc) dc.onclick = function (e) {
         var b = e.target.closest("[data-d]"); if (!b) return;
         var v = b.dataset.d;
         disc = v === "none" ? null : (v === "treat" ? { type: "treat", value: 0 } : { type: "percent", value: +v.slice(1) });
@@ -901,9 +1005,9 @@
     window.open("https://wa.me/?text=" + encodeURIComponent(txt), "_blank");
   }
 
-  function settingsFlow() {
+  function dataFlow() {
     var s = Store.settings();
-    sheet("<h3>Ayarlar</h3><p class='lead'>Veriler bu cihazda tutuluyor</p>" +
+    sheet("<h3>Veri ve yedek</h3><p class='lead'>Kayıtlar şu an bu cihazda tutuluyor</p>" +
       '<div class="acts">' +
       '<button class="btn plain" id="sOut" type="button">Tükenen ürünler (' + s.soldOut.length + ")</button>" +
       '<button class="btn plain" id="sBackup" type="button">Yedek al</button>' +
@@ -973,6 +1077,27 @@
   function wire() {
     app.addEventListener("click", function (e) {
       var el;
+
+      /* kurulum ve giriş */
+      if (e.target.closest("#cOk")) {
+        return Auth.setup({
+          name: $("#cn").value, username: $("#cu").value, password: $("#cp").value
+        }).then(function () { loginErr = ""; view = "tables"; render(); })
+          .catch(function (m) { loginErr = m; render(); });
+      }
+      if (e.target.closest("#lOk")) {
+        return Auth.login($("#lu").value, $("#lp").value)
+          .then(function () { loginErr = ""; view = "tables"; render(); })
+          .catch(function (m) { loginErr = m; render(); });
+      }
+      if (e.target.closest("#meOut") || e.target.closest("#meOut2")) {
+        if (confirm("Çıkış yapılsın mı?")) Auth.logout();
+        return;
+      }
+
+      /* yönetim paneli kendi tıklamalarını üstlenir */
+      if (view === "manage" && Admin.handle(e)) return;
+
       if ((el = e.target.closest("[data-goto]"))) {
         currentOrder = el.dataset.goto; view = "order"; return render();
       }
@@ -991,7 +1116,7 @@
         return;
       }
       if (e.target.closest("#btnWho")) return whoFlow();
-      if (e.target.closest("#btnSettings")) return settingsFlow();
+
       if (e.target.closest("#btnUndo")) {
         return Store.reopenOrder(undoInfo.id).then(function (o) {
           undoInfo = null; currentOrder = o.id; view = "order"; toast("Geri alındı"); render();
@@ -1054,6 +1179,7 @@
     app.addEventListener("scroll", function () { clearTimeout(pt); pt = null; }, true);
 
     app.addEventListener("input", function (e) {
+      if (view === "manage" && Admin.input(e)) return;
       if (e.target.id !== "pq") return;
       picker.q = e.target.value;
       var pos = e.target.selectionStart;
@@ -1068,6 +1194,16 @@
       if (view !== "order") currentOrder = null;
       picker = null;
       render();
+    });
+
+    app.addEventListener("keydown", function (e) {
+      if (e.key !== "Enter") return;
+      if (e.target.id === "cp" || e.target.id === "cu" || e.target.id === "cn") {
+        var b = $("#cOk"); if (b) b.click();
+      }
+      if (e.target.id === "lp" || e.target.id === "lu") {
+        var b2 = $("#lOk"); if (b2) b2.click();
+      }
     });
 
     document.addEventListener("keydown", function (e) {
@@ -1093,9 +1229,25 @@
     });
 
     Store.init().then(function () {
+      Auth.init();
       MENU = Store.menu();
+
+      /* admin.js'in kullandığı ortak yardımcılar */
+      window.UI = {
+        esc: esc, money: money, ic: ic, I: I,
+        toast: toast, sheet: sheet, closeSheet: closeSheet,
+        render: function () { render(); },
+        dataFlow: dataFlow
+      };
+
+      Auth.onChange(function () {
+        MENU = Store.menu();
+        if (!Auth.current()) { view = "tables"; currentOrder = null; picker = null; Admin.reset(); }
+        render();
+      });
+
       wire();
-      Store.onChange(function () { render(); });
+      Store.onChange(function () { MENU = Store.menu(); render(); });
       render();
       setInterval(function () {
         if (view !== "report" && !picker && $("#modal").hidden) render();

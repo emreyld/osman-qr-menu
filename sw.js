@@ -2,7 +2,7 @@
    Restoranın interneti giderse garson sipariş almaya devam edebilmeli.
    Depo kökünde durur ki hem /app/ hem /data/ kapsama girsin. */
 
-var VERSION = "osman-pos-v3";
+var VERSION = "osman-pos-v4";
 var BASE = new URL("./", self.location).pathname;      // örn. /osman-qr-menu/
 
 var SHELL = [
@@ -11,6 +11,8 @@ var SHELL = [
   BASE + "app/style.css",
   BASE + "app/app.js",
   BASE + "app/db.js",
+  BASE + "app/auth.js",
+  BASE + "app/admin.js",
   BASE + "app/manifest.webmanifest",
   BASE + "app/icon-192.png",
   BASE + "app/icon-512.png",
