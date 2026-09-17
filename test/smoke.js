@@ -1,206 +1,185 @@
-// Minimal IndexedDB taklidi — db.js'in kullandigi kadari
+/* Hesap mantığı testleri — sunucuya gitmeden, saf hesaplama tarafını sınar.
+   Çalıştır: node test/smoke.js                                             */
+
+const fs = require("fs");
+const path = require("path");
+const base = path.join(__dirname, "..") + "/";
+
+/* --- tarayıcı taklidi (db.js'in ihtiyaç duyduğu kadarı) --- */
 global.window = global;
+global.navigator = { onLine: true };
+global.document = { hidden: false, addEventListener() {} };
+global.window.addEventListener = () => {};
+global.setInterval = () => 0;
+global.clearInterval = () => {};
+const _ls = {};
+global.localStorage = {
+  getItem: k => (k in _ls ? _ls[k] : null),
+  setItem: (k, v) => { _ls[k] = String(v); },
+  removeItem: k => { delete _ls[k]; }
+};
+
+let uid = 0;
+global.Cloud = {
+  uuid: () => "id-" + (++uid),
+  online: () => false,           // testte sunucuya çıkma
+  session: () => null,
+  restore: () => null,
+  select: () => Promise.resolve([]),
+  upsert: () => Promise.resolve([]),
+  update: () => Promise.resolve([]),
+  remove: () => Promise.resolve([])
+};
+global.Auth = {
+  current: () => ({ id: "u1", name: "Ahmet", role: "admin", active: true }),
+  users: () => [{ id: "u1", name: "Ahmet" }],
+  can: () => true
+};
+
+/* IndexedDB taklidi */
 const stores = {};
-function req(fn){ const r={}; setTimeout(()=>{ try{ r.result=fn(); r.onsuccess&&r.onsuccess(); }catch(e){ r.error=e; r.onerror&&r.onerror(); } },0); return r; }
-function api(s){ return {
-  put(v){ return req(()=>{ s.data.set(v[s.keyPath], JSON.parse(JSON.stringify(v))); return v; }); },
-  getAll(){ return req(()=> [...s.data.values()].map(x=>JSON.parse(JSON.stringify(x)))); },
-  get(k){ return req(()=> s.data.has(k)?JSON.parse(JSON.stringify(s.data.get(k))):undefined); },
-  clear(){ return req(()=>{ s.data.clear(); }); },
-  delete(k){ return req(()=>{ s.data.delete(k); }); }
-};}
-global.indexedDB = { open(){
-  const r={};
-  setTimeout(()=>{
-    const db={
-      objectStoreNames:{contains:n=>!!stores[n]},
-      createObjectStore(n,o){ stores[n]={keyPath:o.keyPath,data:new Map()}; return {createIndex(){}} },
-      transaction(n){ return {objectStore:nm=>api(stores[nm])} }
-    };
-    r.onupgradeneeded&&r.onupgradeneeded({target:{result:db}});
-    r.result=db; r.onsuccess&&r.onsuccess();
-  },0);
+function req(fn) {
+  const r = {};
+  setTimeout(() => {
+    try { r.result = fn(); r.onsuccess && r.onsuccess(); }
+    catch (e) { r.error = e; r.onerror && r.onerror(); }
+  }, 0);
   return r;
-}};
+}
+function api(s) {
+  return {
+    put(v) { return req(() => { s.set(v.k, JSON.parse(JSON.stringify(v))); return v; }); },
+    get(k) { return req(() => (s.has(k) ? JSON.parse(JSON.stringify(s.get(k))) : undefined)); },
+    getAll() { return req(() => [...s.values()]); },
+    clear() { return req(() => s.clear()); },
+    delete(k) { return req(() => s.delete(k)); }
+  };
+}
+global.indexedDB = {
+  open() {
+    const r = {};
+    setTimeout(() => {
+      const d = {
+        objectStoreNames: { contains: n => !!stores[n] },
+        createObjectStore(n) { stores[n] = new Map(); return { createIndex() {} }; },
+        transaction() { return { objectStore: nm => api(stores[nm] || (stores[nm] = new Map())) }; }
+      };
+      r.onupgradeneeded && r.onupgradeneeded({ target: { result: d } });
+      r.result = d; r.onsuccess && r.onsuccess();
+    }, 0);
+    return r;
+  }
+};
 
-const fs=require('fs');
-const base=require('path').join(__dirname,'..')+'/';
-eval(fs.readFileSync(base+'data/menu-data.js','utf8'));
-eval(fs.readFileSync(base+'app/db.js','utf8'));
-const _ls={};
-global.localStorage={getItem:k=>(k in _ls?_ls[k]:null),setItem:(k,v)=>{_ls[k]=String(v)},removeItem:k=>{delete _ls[k]}};
-global.window.localStorage=global.localStorage;
-eval(fs.readFileSync(base+'app/auth.js','utf8'));
+eval(fs.readFileSync(base + "app/db.js", "utf8"));
 
-let pass=0, fail=0;
-const ok=(c,m)=>{ c?pass++:fail++; console.log((c?'  OK  ':'  HATA')+'  '+m); };
+let pass = 0, fail = 0;
+const ok = (c, m) => { c ? pass++ : fail++; console.log((c ? "  OK  " : "  HATA") + "  " + m); };
+
+/* --- deneme menüsü ve masalar (sunucudan gelmiş gibi) --- */
+const MENU = {
+  cay:    { mid: "m1", cat: "hot",   catName: "Sıcak İçecekler", name: "Çay", price: 75 },
+  adana:  { mid: "m2", cat: "kebab", catName: "Kebap", name: "Acılı Adana Kebap", price: 850 },
+  ayran:  { mid: "m3", cat: "soft",  catName: "Soğuk İçecekler", name: "Ayran", price: 190 },
+  baklava:{ mid: "m4", cat: "dess",  catName: "Tatlılar", name: "Baklava", price: 450 }
+};
+
 let O;
-
 Store.init()
- .then(()=>{
-   ok(Store.tables().length===26,'26 masa tanimli');
-   ok(Store.menu().length===123,'123 urun yuklendi ('+Store.menu().length+')');
-   ok(Store.zones().join(',')==='Salon,Bahçe,Üst Kat','bolgeler: '+Store.zones().join(', '));
-   return Store.openTable('S3',4);
- })
- .then(o=>{ O=o;
-   ok(!!o.id && o.status==='open','masa S3 acildi');
-   ok(Store.orderByTable('S3').id===o.id,'masa -> adisyon eslesmesi');
-   const m=Store.menu().find(x=>x.name==='Acılı Adana Kebap');
-   ok(!!m && m.price===850,'Acili Adana Kebap 850 TL');
-   return Store.addItem(o.id,m,2,'acisiz olsun');
- })
- .then(o=>{
-   ok(o.items.length===1 && o.items[0].qty===2,'2 adet eklendi');
-   ok(o.items[0].note==='acisiz olsun','mutfak notu kaydedildi');
-   ok(Store.totals(o).sub===1700,'ara toplam 1700 ('+Store.totals(o).sub+')');
-   const m2=Store.menu().find(x=>x.name==='Ayran');
-   return Store.addItem(o.id,m2,3,'');
- })
- .then(o=>{
-   ok(Store.totals(o).sub===2270,'ara toplam 2270 ('+Store.totals(o).sub+')');
-   const m=Store.menu().find(x=>x.name==='Acılı Adana Kebap');
-   return Store.addItem(o.id,m,1,'acisiz olsun');
- })
- .then(o=>{
-   ok(o.items.length===2 && o.items[0].qty===3,'ayni urun+ayni not birlesti (qty 3)');
-   return Store.sendToKitchen(o.id);
- })
- .then(n=>{
-   ok(n===2,'mutfaga 2 kalem gitti');
-   const o=Store.order(O.id);
-   ok(o.items.every(l=>l.status==='sent'),'kalemler mutfakta');
-   return Store.addItem(o.id,Store.menu().find(x=>x.name==='Baklava'),1,'');
- })
- .then(o=>{
-   ok(o.items.filter(l=>l.status==='draft').length===1,'sonradan eklenen kalem taslak kaldi');
-   return Store.sendToKitchen(o.id);
- })
- .then(n=>{ ok(n===1,'sadece yeni kalem mutfaga gitti'); return Store.markTableReady(O.id); })
- .then(o=>{
-   ok(o.items.every(l=>l.status==='ready'),'hepsi hazir');
-   return Store.setDiscount(o.id,{type:'percent',value:10});
- })
- .then(o=>{
-   const t=Store.totals(o);
-   ok(t.sub===3570,'ara toplam 3570 ('+t.sub+')');
-   ok(t.discount===357 && t.total===3213,'%10 indirim -> '+t.total);
-   return Store.setDiscount(o.id,{type:'treat',value:0});
- })
- .then(o=>{ ok(Store.totals(o).total===0,'ikram -> 0'); return Store.setDiscount(o.id,null); })
- .then(o=>Store.closeOrder(o.id,'kart'))
- .then(o=>{
-   ok(o.status==='closed' && o.totals.total===3570,'hesap kapandi 3570');
-   ok(Store.openOrders().length===0,'acik adisyon kalmadi');
-   const r=Store.report(Store.dayStart(),Date.now()+1);
-   ok(r.adisyon===1 && r.ciro===3570,'rapor: 1 adisyon / '+r.ciro);
-   ok(r.kisiOrt===893,'kisi basi 893 ('+r.kisiOrt+')');
-   ok(r.items.length===3,'3 cesit urun raporda');
-   ok(r.items[0].name==='Acılı Adana Kebap','en cok ciro: '+r.items[0].name);
-   ok(r.byPay.kart===3570,'kart ile 3570');
-   return Store.wipe();
- })
- .then(()=>{
-   ok(Store.report(Store.dayStart(),Date.now()+1).adisyon===0,'temizlendi');
-   console.log('\n  --- urun bazli ikram / indirim ---');
-   return Store.openTable('B2',3);
- })
- .then(o=>{ O=o; return Store.addItem(o.id,Store.menu().find(x=>x.name==='Çay'),3,''); })
- .then(o=>{
-   ok(Store.totals(o).gross===225,'3 cay 225 ('+Store.totals(o).gross+')');
-   return Store.setPromo(o.id,o.items[0].lid,{type:'treat',qty:1});
- })
- .then(o=>{
-   const t=Store.totals(o);
-   ok(t.promo===75 && t.total===150,'1 cay ikram -> 150 ('+t.total+')');
-   return Store.setPromo(o.id,o.items[0].lid,{type:'treat',qty:3});
- })
- .then(o=>{
-   ok(Store.totals(o).total===0,'hepsi ikram -> 0');
-   return Store.setPromo(o.id,o.items[0].lid,{type:'percent',value:20});
- })
- .then(o=>{
-   const t=Store.totals(o);
-   ok(t.promo===45 && t.total===180,'%20 satir indirimi -> 180 ('+t.total+')');
-   return Store.addItem(o.id,Store.menu().find(x=>x.name==='Baklava'),1,'');
- })
- .then(o=>Store.setPromo(o.id,o.items[1].lid,{type:'amount',value:100}))
- .then(o=>{
-   const t=Store.totals(o);
-   ok(t.gross===675 && t.promo===145 && t.total===530,'tutar indirimi -> 530 ('+t.total+')');
-   return Store.setDiscount(o.id,{type:'percent',value:10});
- })
- .then(o=>{
-   const t=Store.totals(o);
-   ok(t.sub===530 && t.discount===53 && t.total===477,'ustune %10 adisyon indirimi -> 477 ('+t.total+')');
-   return Store.setDiscount(o.id,null);
- })
- .then(o=>Store.sendToKitchen(o.id).then(()=>Store.order(o.id)))
- .then(o=>Store.voidItem(o.id,o.items[1].lid,'Musteri vazgecti'))
- .then(o=>{
-   const t=Store.totals(o);
-   ok(t.gross===225 && t.total===180,'iptal edilen kalem toplamdan cikti ('+t.total+')');
-   return Store.closeOrder(o.id,'nakit');
- })
- .then(()=>{
-   const r=Store.report(Store.dayStart(),Date.now()+1);
-   ok(r.ciro===180,'ikramli adisyon ciro 180 ('+r.ciro+')');
-   ok(r.ikram===45,'rapor ikram/indirim 45 ('+r.ikram+')');
-   ok(r.iptal===450,'rapor iptal 450 ('+r.iptal+')');
-   ok(r.items.length===1 && r.items[0].name==='Çay','iptal edilen urun raporda yok');
-   return Store.wipe();
- })
- .then(()=>{
-   console.log('\n  --- hesaplar ve yetkiler ---');
-   Auth.init();
-   ok(Auth.needsSetup(),'ilk acilis: kurulum gerekiyor');
-   return Auth.setup({name:'Turgay',username:'Turgay',password:'1234'});
- })
- .then(()=>{
-   ok(!Auth.needsSetup(),'kurulum bitti');
-   ok(!!Auth.current(),'otomatik giris yapildi');
-   ok(Auth.isAdmin(),'sahip yonetici');
-   ok(Auth.can('manage') && Auth.can('report') && Auth.can('discount'),'yonetici tum yetkilere sahip');
-   Auth.logout();
-   ok(!Auth.current(),'cikis yapildi');
-   return Auth.login('TURGAY','1234');
- })
- .then(()=>{
-   ok(!!Auth.current(),'buyuk harfle kullanici adi da calisiyor');
-   return Auth.login('turgay','yanlis').then(()=>{ok(false,'yanlis parola gecti!')},()=>{ok(true,'yanlis parola reddedildi')});
- })
- .then(()=>Auth.create({name:'Ali',username:'ali',password:'1234',role:'waiter'}))
- .then(w=>{
-   window._w=w;
-   ok(Auth.staff().length===1,'garson eklendi');
-   return Auth.create({name:'Veli',username:'ali',password:'1234',role:'waiter'})
-     .then(()=>{ok(false,'ayni kullanici adi gecti!')},()=>{ok(true,'ayni kullanici adi reddedildi')});
- })
- .then(()=>Auth.create({name:'Kisa',username:'kisa',password:'12',role:'waiter'})
-   .then(()=>{ok(false,'kisa parola gecti!')},()=>{ok(true,'kisa parola reddedildi')}))
- .then(()=>Auth.login('ali','1234'))
- .then(()=>{
-   ok(!Auth.isAdmin(),'garson yonetici degil');
-   ok(Auth.can('order') && Auth.can('close'),'garson siparis alip hesap kapatabilir');
-   ok(!Auth.can('discount'),'garson varsayilan olarak ikram yapamaz');
-   ok(!Auth.can('voidItem'),'garson varsayilan olarak iptal edemez');
-   ok(!Auth.can('report'),'garson gun sonu raporunu goremez');
-   ok(!Auth.can('manage'),'garson yonetim panelini goremez');
-   var p=Auth.defaultPerms('waiter'); p.discount=true;
-   return Auth.update(window._w.id,{perms:p});
- })
- .then(()=>{
-   ok(Auth.can('discount'),'yetki verilince garson ikram yapabiliyor');
-   ok(!Auth.can('voidItem'),'digger yetkiler degismedi');
-   return Auth.update(window._w.id,{active:false});
- })
- .then(()=>{ Auth.logout(); return Auth.login('ali','1234')
-   .then(()=>{ok(false,'kapali hesap girdi!')},()=>{ok(true,'kapali hesap giremiyor')}); })
- .then(()=>Auth.login('turgay','1234'))
- .then(()=>Auth.remove(Auth.current().id)
-   .then(()=>{ok(false,'son yonetici silindi!')},()=>{ok(true,'son yonetici silinemiyor')}))
- .then(()=>{
-   console.log('\n  '+pass+' gecti, '+fail+' kaldi');
-   process.exit(fail?1:0);
- })
- .catch(e=>{ console.log('  PATLADI:',e); process.exit(1); });
+  .then(() => {
+    /* masayı elle kur — sunucu yok */
+    Store.saveTables([{ id: "t1", name: "3", zone: "Salon", seats: 4 }]);
+    ok(Store.tables().length === 1, "masa tanımlandı");
+    return Store.openTable("t1", 4, "Ahmet");
+  })
+  .then(o => {
+    O = o;
+    ok(o.status === "open" && o.no === 1, "masa açıldı, adisyon no " + o.no);
+    ok(Store.orderByTable("t1").id === o.id, "masa → adisyon eşleşmesi");
+    return Store.addItem(o.id, MENU.adana, 2, "acısız");
+  })
+  .then(o => {
+    ok(o.items.length === 1 && o.items[0].qty === 2, "2 adet eklendi");
+    ok(Store.totals(o).gross === 1700, "ara toplam 1700 (" + Store.totals(o).gross + ")");
+    return Store.addItem(o.id, MENU.adana, 1, "acısız");
+  })
+  .then(o => {
+    ok(o.items.length === 1 && o.items[0].qty === 3, "aynı ürün + aynı not birleşti");
+    return Store.addItem(o.id, MENU.cay, 3, "");
+  })
+  .then(o => {
+    ok(Store.totals(o).gross === 2775, "ara toplam 2775 (" + Store.totals(o).gross + ")");
+    return Store.sendToKitchen(o.id);
+  })
+  .then(n => {
+    ok(n === 2, "mutfağa 2 kalem gitti");
+    const o = Store.order(O.id);
+    ok(o.items.every(l => l.status === "sent"), "kalemler mutfakta");
+    return Store.addItem(o.id, MENU.baklava, 1, "");
+  })
+  .then(o => {
+    ok(o.items.filter(l => l.status === "draft").length === 1, "sonradan eklenen taslak kaldı");
+    return Store.sendToKitchen(o.id);
+  })
+  .then(n => { ok(n === 1, "yalnızca yeni kalem gönderildi"); return Store.markTableReady(O.id); })
+  .then(o => {
+    ok(o.items.every(l => l.status === "ready"), "hepsi hazır");
+    ok(Store.readyCount(o) === 7, "hazır adet 7 (" + Store.readyCount(o) + ")");
+    ok(Store.readyTables().length === 1, "hazır masa listesi");
+    return Store.markServed(o.id);
+  })
+  .then(o => {
+    ok(o.items.every(l => l.status === "served"), "servis edildi");
+    ok(Store.readyTables().length === 0, "hazır uyarısı düştü");
+    const cay = o.items.find(l => l.mid === "m1");
+    return Store.setPromo(o.id, cay.lid, { type: "treat", qty: 1 });
+  })
+  .then(o => {
+    const t = Store.totals(o);
+    ok(t.promo === 75 && t.total === 3150, "1 çay ikram → 3150 (" + t.total + ")");
+    const cay = o.items.find(l => l.mid === "m1");
+    return Store.setPromo(o.id, cay.lid, { type: "percent", value: 20 });
+  })
+  .then(o => {
+    ok(Store.totals(o).promo === 45, "%20 satır indirimi 45 (" + Store.totals(o).promo + ")");
+    const bak = o.items.find(l => l.mid === "m4");
+    return Store.setPromo(o.id, bak.lid, { type: "amount", value: 100 });
+  })
+  .then(o => {
+    const t = Store.totals(o);
+    ok(t.gross === 3225 && t.promo === 145 && t.total === 3080, "tutar indirimi → 3080 (" + t.total + ")");
+    return Store.setDiscount(o.id, { type: "percent", value: 10 });
+  })
+  .then(o => {
+    const t = Store.totals(o);
+    ok(t.sub === 3080 && t.discount === 308 && t.total === 2772, "üstüne %10 → 2772 (" + t.total + ")");
+    return Store.setDiscount(o.id, null);
+  })
+  .then(o => {
+    const bak = o.items.find(l => l.mid === "m4");
+    return Store.voidItem(o.id, bak.lid, "Müşteri vazgeçti");
+  })
+  .then(o => {
+    const t = Store.totals(o);
+    ok(t.gross === 2775 && t.total === 2730, "iptal edilen kalem düştü (" + t.total + ")");
+    return Store.closeOrder(o.id, "kart");
+  })
+  .then(o => {
+    ok(o.status === "closed" && o.totals.total === 2730, "hesap kapandı 2730");
+    ok(Store.openOrders().length === 0, "açık adisyon kalmadı");
+    const r = Store.report(Store.dayStart(), Date.now() + 1);
+    ok(r.adisyon === 1 && r.ciro === 2730, "rapor ciro " + r.ciro);
+    ok(r.ikram === 45, "rapor ikram 45 (" + r.ikram + ")");
+    ok(r.iptal === 450, "rapor iptal 450 (" + r.iptal + ")");
+    ok(r.kisiOrt === 683, "kişi başı 683 (" + r.kisiOrt + ")");
+    ok(r.waiters.length === 1 && r.waiters[0].name === "Ahmet", "garson kırılımı");
+    ok(r.items.length === 2, "iptal edilen ürün raporda yok");
+    return Store.openTable("t1", 2, "Ahmet");
+  })
+  .then(o => {
+    ok(o.no === 2, "ikinci adisyon no 2 (" + o.no + ")");
+    ok(Store.pending() > 0, "kuyrukta bekleyen kayıt var (çevrimdışı)");
+    console.log("\n  " + pass + " geçti, " + fail + " kaldı");
+    process.exit(fail ? 1 : 0);
+  })
+  .catch(e => { console.log("  PATLADI:", e); process.exit(1); });

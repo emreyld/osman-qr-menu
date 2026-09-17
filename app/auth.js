@@ -1,28 +1,13 @@
-/* Hesaplar, oturum ve yetkiler.
-
-   ÖNEMLİ: bu sürümde hesaplar cihazda tutulur ve parola basit karmayla saklanır.
-   Gerçek sistemde bu dosyanın yerini sunucu alacak (Supabase Auth + satır bazlı
-   yetki). Uygulamanın geri kalanı yalnızca Auth üzerinden konuştuğu için o geçiş
-   ekranları değiştirmeyecek. */
+/* Hesaplar ve yetkiler — artık sunucuda (Supabase Auth + staff tablosu).
+   Yetki denetimi asıl olarak veritabanında yapılır; buradaki kontroller
+   yalnızca arayüzü sadeleştirmek içindir. */
 (function () {
   "use strict";
 
-  var KEY_SESSION = "osman-session";
   var listeners = [];
-  var session = null;      // { userId, at }
-  var users = null;        // Store.settings().users
-
-  /* ---------- yetkiler ---------- */
-  var PERMS = {
-    admin: {
-      tables: true, order: true, close: true, discount: true, voidItem: true,
-      report: true, manage: true, backup: true
-    },
-    waiter: {
-      tables: true, order: true, close: true, discount: false, voidItem: false,
-      report: false, manage: false, backup: false
-    }
-  };
+  var me = null;        // staff satırı
+  var team = [];        // aynı işletmenin personeli
+  var venue = null;     // venues satırı
 
   var PERM_LABEL = {
     close: "Hesap kapatabilir",
@@ -30,165 +15,146 @@
     voidItem: "Mutfağa gitmiş ürünü iptal edebilir",
     report: "Gün sonu raporunu görebilir"
   };
+  var DEFAULT_ON = { tables: true, order: true, close: true };
 
-  /* ---------- parola ---------- */
-  /* Güvenli bağlamda SHA-256, değilse basit karma (yalnızca deneme sürümü için). */
-  function hash(pw, salt) {
-    var txt = salt + "::" + pw;
-    if (window.crypto && window.crypto.subtle && window.isSecureContext) {
-      var buf = new TextEncoder().encode(txt);
-      return window.crypto.subtle.digest("SHA-256", buf).then(function (d) {
-        return Array.prototype.map.call(new Uint8Array(d), function (b) {
-          return ("0" + b.toString(16)).slice(-2);
-        }).join("");
-      });
-    }
-    var h = 5381;
-    for (var i = 0; i < txt.length; i++) h = ((h << 5) + h + txt.charCodeAt(i)) >>> 0;
-    return Promise.resolve("w" + h.toString(16));
-  }
-
-  function salt() {
-    return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
-  }
-
-  function norm(u) { return String(u || "").trim().toLocaleLowerCase("tr"); }
-
-  /* ---------- depolama ---------- */
-  function load() {
-    users = Store.settings().users || [];
-  }
-  function save() {
-    return Store.saveSettings({ users: users });
-  }
   function emit() {
     listeners.forEach(function (fn) { try { fn(); } catch (e) { console.error(e); } });
+  }
+
+  function cacheKey() { return "osman-profile"; }
+  function cacheWrite() {
+    try {
+      localStorage.setItem(cacheKey(), JSON.stringify({ me: me, team: team, venue: venue }));
+    } catch (e) {}
+  }
+  function cacheRead() {
+    try {
+      var d = JSON.parse(localStorage.getItem(cacheKey()) || "null");
+      if (d) { me = d.me; team = d.team || []; venue = d.venue; }
+    } catch (e) {}
+  }
+
+  function pullProfile() {
+    var uid = Cloud.userId();
+    if (!uid) return Promise.resolve(null);
+    return Promise.all([
+      Cloud.select("staff", "select=*&order=role.asc,name.asc"),
+      Cloud.select("venues", "select=*&limit=1")
+    ]).then(function (r) {
+      team = r[0] || [];
+      venue = (r[1] || [])[0] || null;
+      me = team.filter(function (s) { return s.id === uid; })[0] || null;
+      cacheWrite();
+      return me;
+    });
   }
 
   var Auth = {
     onChange: function (fn) { listeners.push(fn); },
 
     init: function () {
-      load();
-      try {
-        var raw = localStorage.getItem(KEY_SESSION);
-        if (raw) {
-          var s = JSON.parse(raw);
-          if (s && Auth.user(s.userId)) session = s;
-        }
-      } catch (e) {}
-      return Auth;
+      cacheRead();
+      var s = Cloud.restore();
+      if (!s) { me = null; team = []; return Promise.resolve(null); }
+      if (!Cloud.online()) return Promise.resolve(me);      // çevrimdışı: önbellekteki profil
+      return pullProfile().catch(function () { return me; });
     },
 
-    /* ilk açılışta hiç hesap yoksa kurulum ekranı gösterilir */
-    needsSetup: function () { return !users || !users.length; },
+    refresh: function () { return pullProfile().then(function () { emit(); }); },
 
-    users: function () { return (users || []).slice(); },
-    staff: function () {
-      return (users || []).filter(function (u) { return u.role === "waiter"; });
-    },
-    user: function (id) {
-      return (users || []).filter(function (u) { return u.id === id; })[0];
-    },
-    current: function () { return session ? Auth.user(session.userId) : null; },
-    isAdmin: function () {
-      var u = Auth.current();
-      return !!u && u.role === "admin";
-    },
+    /* işletmeyi biz kuruyoruz; uygulamada kurulum ekranı yok */
+    needsSetup: function () { return false; },
+
+    venue: function () { return venue; },
+    current: function () { return me; },
+    users: function () { return team.slice(); },
+    staff: function () { return team.filter(function (s) { return s.role === "waiter"; }); },
+    user: function (id) { return team.filter(function (s) { return s.id === id; })[0]; },
+    isAdmin: function () { return !!me && me.role === "admin"; },
 
     can: function (what) {
-      var u = Auth.current();
-      if (!u) return false;
-      if (u.perms && Object.prototype.hasOwnProperty.call(u.perms, what)) return !!u.perms[what];
-      return !!(PERMS[u.role] || {})[what];
+      if (!me || !me.active) return false;
+      if (me.role === "admin") return true;
+      var p = me.perms || {};
+      if (Object.prototype.hasOwnProperty.call(p, what)) return !!p[what];
+      return !!DEFAULT_ON[what];
     },
 
     permLabels: function () { return PERM_LABEL; },
-    defaultPerms: function (role) { return JSON.parse(JSON.stringify(PERMS[role] || PERMS.waiter)); },
-
-    /* ---------- hesap işlemleri ---------- */
-    create: function (opts) {
-      var un = norm(opts.username);
-      if (!un) return Promise.reject("kullanıcı adı boş");
-      if (!opts.password || opts.password.length < 4) return Promise.reject("parola en az 4 karakter olmalı");
-      if ((users || []).some(function (u) { return u.username === un; })) return Promise.reject("bu kullanıcı adı zaten var");
-      var s = salt();
-      return hash(opts.password, s).then(function (h) {
-        var u = {
-          id: "u_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-          username: un,
-          name: (opts.name || opts.username).trim(),
-          role: opts.role === "admin" ? "admin" : "waiter",
-          salt: s, hash: h,
-          perms: opts.perms || Auth.defaultPerms(opts.role),
-          active: true,
-          createdAt: Date.now()
-        };
-        users.push(u);
-        return save().then(function () { emit(); return u; });
-      });
-    },
-
-    update: function (id, patch) {
-      var u = Auth.user(id);
-      if (!u) return Promise.reject("hesap yok");
-      if (patch.name !== undefined) u.name = String(patch.name).trim();
-      if (patch.active !== undefined) u.active = !!patch.active;
-      if (patch.perms !== undefined) u.perms = patch.perms;
-      return save().then(function () { emit(); return u; });
-    },
-
-    setPassword: function (id, pw) {
-      var u = Auth.user(id);
-      if (!u) return Promise.reject("hesap yok");
-      if (!pw || pw.length < 4) return Promise.reject("parola en az 4 karakter olmalı");
-      var s = salt();
-      return hash(pw, s).then(function (h) {
-        u.salt = s; u.hash = h;
-        return save().then(function () { emit(); return u; });
-      });
-    },
-
-    remove: function (id) {
-      var u = Auth.user(id);
-      if (!u) return Promise.resolve();
-      if (u.role === "admin" && users.filter(function (x) { return x.role === "admin"; }).length < 2) {
-        return Promise.reject("son yönetici silinemez");
-      }
-      users = users.filter(function (x) { return x.id !== id; });
-      if (session && session.userId === id) Auth.logout();
-      return save().then(function () { emit(); });
-    },
+    defaultPerms: function () { return { close: true, discount: false, voidItem: false, report: false }; },
 
     /* ---------- oturum ---------- */
     login: function (username, password) {
-      var un = norm(username);
-      var u = (users || []).filter(function (x) { return x.username === un; })[0];
-      if (!u) return Promise.reject("kullanıcı adı veya parola hatalı");
-      if (!u.active) return Promise.reject("bu hesap kapalı");
-      return hash(password, u.salt).then(function (h) {
-        if (h !== u.hash) return Promise.reject("kullanıcı adı veya parola hatalı");
-        session = { userId: u.id, at: Date.now() };
-        try { localStorage.setItem(KEY_SESSION, JSON.stringify(session)); } catch (e) {}
-        emit();
-        return u;
-      });
+      if (!Cloud.online()) return Promise.reject("İnternet yok — giriş için bağlantı gerekiyor");
+      return Cloud.signIn(username, password)
+        .then(pullProfile)
+        .then(function (u) {
+          if (!u) { Cloud.signOut(); throw "Bu hesap bu işletmeye tanımlı değil"; }
+          if (!u.active) { Cloud.signOut(); throw "Bu hesap kapalı"; }
+          emit();
+          return u;
+        })
+        .catch(function (e) { throw (e && e.message) || e; });
     },
 
     logout: function () {
-      session = null;
-      try { localStorage.removeItem(KEY_SESSION); } catch (e) {}
-      emit();
+      return Cloud.signOut().then(function () {
+        me = null; team = []; venue = null;
+        try { localStorage.removeItem(cacheKey()); } catch (e) {}
+        emit();
+      });
     },
 
-    /* ilk kurulum: işletme sahibinin hesabı */
-    setup: function (opts) {
-      return Auth.create({
-        username: opts.username, password: opts.password,
-        name: opts.name, role: "admin"
-      }).then(function (u) {
-        return Auth.login(opts.username, opts.password).then(function () { return u; });
-      });
+    /* ---------- personel yönetimi (yalnızca yönetici) ---------- */
+    create: function (opts) {
+      if (!Auth.isAdmin()) return Promise.reject("Yetkin yok");
+      if (!venue || !venue.join_code) return Promise.reject("İşletme bilgisi okunamadı");
+      var un = String(opts.username || "").trim().toLowerCase();
+      if (!un) return Promise.reject("Kullanıcı adı boş");
+      if (!opts.password || opts.password.length < 6) return Promise.reject("Parola en az 6 karakter olmalı");
+      if (team.some(function (s) { return s.username === un; })) return Promise.reject("Bu kullanıcı adı zaten var");
+
+      return Cloud.signUp({
+        username: un, password: opts.password, name: opts.name || un,
+        joinCode: venue.join_code, perms: opts.perms || Auth.defaultPerms()
+      }).then(function () {
+        return pullProfile();
+      }).then(function () {
+        emit();
+        return team.filter(function (s) { return s.username === un; })[0];
+      }).catch(function (e) { throw (e && e.message) || e; });
+    },
+
+    update: function (id, patch) {
+      if (!Auth.isAdmin()) return Promise.reject("Yetkin yok");
+      var body = {};
+      if (patch.name !== undefined) body.name = String(patch.name).trim();
+      if (patch.active !== undefined) body.active = !!patch.active;
+      if (patch.perms !== undefined) body.perms = patch.perms;
+      return Cloud.update("staff", "id=eq." + id, body)
+        .then(function () { return pullProfile(); })
+        .then(function () { emit(); })
+        .catch(function (e) { throw (e && e.message) || e; });
+    },
+
+    /* Kendi parolanı değiştirebilirsin. Başkasınınkini sıfırlamak sunucu
+       tarafında yönetici anahtarı ister — o yüzden burada engelli. */
+    canResetOthers: function () { return false; },
+    setPassword: function (id, pw) {
+      if (!me || id !== me.id) {
+        return Promise.reject("Parolayı ancak kişinin kendisi değiştirebilir");
+      }
+      if (!pw || pw.length < 6) return Promise.reject("Parola en az 6 karakter olmalı");
+      return Cloud.changePassword(pw).catch(function (e) { throw (e && e.message) || e; });
+    },
+
+    remove: function (id) {
+      if (!Auth.isAdmin()) return Promise.reject("Yetkin yok");
+      if (me && id === me.id) return Promise.reject("Kendi hesabını silemezsin");
+      return Cloud.remove("staff", "id=eq." + id)
+        .then(function () { return pullProfile(); })
+        .then(function () { emit(); })
+        .catch(function (e) { throw (e && e.message) || e; });
     }
   };
 

@@ -190,7 +190,9 @@
       h += "</div></div>";
     }
 
-    h += '<div class="acts"><button class="btn plain" id="meOut2" type="button">Çıkış yap</button></div>';
+    h += '<div class="acts"><button class="btn plain" id="meSync" type="button">Şimdi eşitle' +
+      (Store.pending() ? " (" + Store.pending() + " bekliyor)" : "") + "</button>" +
+      '<button class="btn plain" id="meOut2" type="button">Çıkış yap</button></div>';
     return h + "<div style='height:8px'></div></div>";
   }
 
@@ -209,9 +211,17 @@
       '<div class="bigtitle"><h1>Masalar</h1><p>' + open.length + " açık adisyon · " +
       pendingCount() + " ürün mutfakta</p></div>";
 
+    var bek = Store.pending();
     if (!navigator.onLine) {
       h += '<div class="strip off">' + ic(I.bell, 19) +
-        "<span><b>Çevrimdışı</b> — kayıtlar cihazda tutuluyor</span></div>";
+        "<span><b>Çevrimdışı</b> — kayıtlar cihazda, bağlanınca gönderilecek" +
+        (bek ? " (" + bek + ")" : "") + "</span></div>";
+    } else if (bek) {
+      h += '<div class="strip">' + ic(I.undo, 19) +
+        "<span><b>" + bek + " kayıt gönderiliyor</b></span></div>";
+    }
+    if (Store.lastError()) {
+      h += '<div class="strip off">' + ic(I.bell, 19) + "<span>" + esc(Store.lastError()) + "</span></div>";
     }
     if (!hideInstall && !standalone()) {
       if (installEvt) {
@@ -548,13 +558,6 @@
   function render() {
     var html;
 
-    if (Auth.needsSetup()) {
-      app.innerHTML = renderSetup();
-      $("#tabs").innerHTML = "";
-      document.body.classList.remove("hasbar");
-      document.body.dataset.view = "gate";
-      return;
-    }
     if (!Auth.current()) {
       app.innerHTML = renderLogin();
       $("#tabs").innerHTML = "";
@@ -616,10 +619,10 @@
       function (c) {
         c.querySelector("#wOut2").onclick = function () { closeSheet(); soldOutFlow(); };
         c.querySelector("#wPw").onclick = function () {
-          var pw = prompt("Yeni parola (en az 4 karakter)");
+          var pw = prompt("Yeni parola (en az 6 karakter)");
           if (!pw) return;
           Auth.setPassword(me.id, pw).then(function () { closeSheet(); toast("Parola değişti"); })
-            .catch(function (m) { toast(m); });
+            .catch(function (m) { toast((m && m.message) || m); });
         };
         c.querySelector("#wLogout").onclick = function () {
           if (!confirm("Çıkış yapılsın mı?")) return;
@@ -1027,7 +1030,10 @@
           toast("Yedek indirildi");
         };
         var f = c.querySelector("#fileIn");
-        c.querySelector("#sRestore").onclick = function () { f.click(); };
+        c.querySelector("#sRestore").onclick = function () {
+          toast("Kayıtlar sunucuda; geri yüklemeye gerek yok");
+        };
+        if (false) f.click();
         f.onchange = function () {
           var file = f.files[0]; if (!file) return;
           var rd = new FileReader();
@@ -1079,16 +1085,17 @@
       var el;
 
       /* kurulum ve giriş */
-      if (e.target.closest("#cOk")) {
-        return Auth.setup({
-          name: $("#cn").value, username: $("#cu").value, password: $("#cp").value
-        }).then(function () { loginErr = ""; view = "tables"; render(); })
-          .catch(function (m) { loginErr = m; render(); });
-      }
       if (e.target.closest("#lOk")) {
+        var btn = $("#lOk");
+        btn.disabled = true; btn.textContent = "Giriş yapılıyor...";
         return Auth.login($("#lu").value, $("#lp").value)
-          .then(function () { loginErr = ""; view = "tables"; render(); })
-          .catch(function (m) { loginErr = m; render(); });
+          .then(function () { loginErr = ""; view = "tables"; return Store.sync(); })
+          .then(function () { render(); })
+          .catch(function (m) { loginErr = (m && m.message) || m; render(); });
+      }
+      if (e.target.closest("#meSync")) {
+        toast("Eşitleniyor...");
+        return Store.sync().then(function () { toast("Eşitlendi"); render(); });
       }
       if (e.target.closest("#meOut") || e.target.closest("#meOut2")) {
         if (confirm("Çıkış yapılsın mı?")) Auth.logout();
@@ -1228,8 +1235,10 @@
       if (!document.hidden) { keepAwake(view === "order" || view === "kitchen" || !!picker); render(); }
     });
 
+    Cloud.restore();
     Store.init().then(function () {
-      Auth.init();
+      return Auth.init();
+    }).then(function () {
       MENU = Store.menu();
 
       /* admin.js'in kullandığı ortak yardımcılar */
