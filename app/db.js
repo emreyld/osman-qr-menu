@@ -123,7 +123,7 @@
   }
 
   /* ---------- hesaplama ---------- */
-  function lineTotal(li) { return (li.price || 0) * li.qty; }
+  function lineTotal(li) { return li.status === "void" ? 0 : (li.price || 0) * li.qty; }
 
   function totals(order) {
     var sub = (order.items || []).reduce(function (s, li) { return s + lineTotal(li); }, 0);
@@ -289,6 +289,102 @@
       });
     },
 
+
+    /* ---------- kalem iptali (mutfağa gitmiş ürün) ---------- */
+    voidItem: function (orderId, lid, reason) {
+      var o = Store.order(orderId); if (!o) return Promise.reject("adisyon yok");
+      var li = o.items.filter(function (x) { return x.lid === lid; })[0];
+      if (li) { li.status = "void"; li.voidReason = reason || ""; li.voidAt = Date.now(); }
+      return put("orders", o).then(function () { broadcast("void"); return o; });
+    },
+
+    /* ---------- masa taşıma ve birleştirme ---------- */
+    moveOrder: function (orderId, toTableId) {
+      var o = Store.order(orderId); if (!o) return Promise.reject("adisyon yok");
+      if (Store.orderByTable(toTableId)) return Promise.reject("hedef masa dolu");
+      o.tableId = toTableId;
+      return put("orders", o).then(function () { broadcast("move"); return o; });
+    },
+
+    mergeOrders: function (fromId, intoId) {
+      var a = Store.order(fromId), b = Store.order(intoId);
+      if (!a || !b) return Promise.reject("adisyon yok");
+      b.items = b.items.concat(a.items);
+      b.guests = (b.guests || 0) + (a.guests || 0);
+      orders = orders.filter(function (x) { return x.id !== fromId; });
+      return put("orders", b).then(function () {
+        return new Promise(function (res, rej) {
+          var r = tx("orders", "readwrite").delete(fromId);
+          r.onsuccess = function () { broadcast("merge"); res(b); };
+          r.onerror = function () { rej(r.error); };
+        });
+      });
+    },
+
+    /* ---------- yanlışlıkla kapatılanı geri al ---------- */
+    reopenOrder: function (orderId) {
+      var o = Store.order(orderId); if (!o) return Promise.reject("adisyon yok");
+      if (Store.orderByTable(o.tableId)) return Promise.reject("masa yeniden açılmış");
+      o.status = "open"; o.closedAt = null; o.payment = null; delete o.totals;
+      return put("orders", o).then(function () { broadcast("reopen"); return o; });
+    },
+
+    lastClosed: function () {
+      var c = orders.filter(function (o) { return o.status === "closed"; })
+        .sort(function (a, b) { return b.closedAt - a.closedAt; });
+      return c[0];
+    },
+
+    /* ---------- servis notu ---------- */
+    setNote: function (orderId, note) {
+      var o = Store.order(orderId); if (!o) return Promise.reject("adisyon yok");
+      o.note = note;
+      return put("orders", o).then(function () { broadcast("order"); return o; });
+    },
+
+    /* ---------- sık kullanılanlar: geçmişte en çok satanlar ---------- */
+    favourites: function (limit) {
+      limit = limit || 12;
+      var since = Date.now() - 30 * 86400000;
+      var count = {};
+      orders.forEach(function (o) {
+        if (o.status !== "closed" || o.closedAt < since) return;
+        (o.items || []).forEach(function (li) {
+          if (li.status === "void") return;
+          count[li.mid] = (count[li.mid] || 0) + li.qty;
+        });
+      });
+      var menu = flatMenu(), byMid = {};
+      menu.forEach(function (m) { byMid[m.mid] = m; });
+      var ranked = Object.keys(count)
+        .sort(function (a, b) { return count[b] - count[a]; })
+        .map(function (mid) { return byMid[mid]; })
+        .filter(Boolean);
+      /* geçmiş yoksa akıllı varsayılan: çok satan kategorilerden ilk ürünler */
+      if (ranked.length < limit) {
+        var seedCats = ["hot", "soft", "kebab", "salads", "pide", "desserts"];
+        seedCats.forEach(function (c) {
+          menu.filter(function (m) { return m.cat === c && m.price != null; })
+            .slice(0, 3).forEach(function (m) {
+              if (ranked.length < limit && ranked.indexOf(m) < 0 &&
+                  !ranked.some(function (x) { return x.mid === m.mid; })) ranked.push(m);
+            });
+        });
+      }
+      return ranked.slice(0, limit);
+    },
+
+    /* ---------- gün gezinme ---------- */
+    dayOffset: function (n) {
+      return dayStart(Date.now() + (n || 0) * 86400000);
+    },
+    dayEnd: function (from) { return from + 86400000; },
+    hasDay: function (from) {
+      return orders.some(function (o) {
+        return o.status === "closed" && o.closedAt >= from && o.closedAt < from + 86400000;
+      });
+    },
+
     /* ---------- rapor ---------- */
     closedBetween: function (from, to) {
       return orders.filter(function (o) {
@@ -307,6 +403,7 @@
         byHour[h] = (byHour[h] || 0) + t.total;
         byPay[o.payment || "—"] = (byPay[o.payment || "—"] || 0) + t.total;
         (o.items || []).forEach(function (li) {
+          if (li.status === "void") return;
           var k = li.name;
           if (!byItem[k]) byItem[k] = { name: li.name, catName: li.catName, qty: 0, tutar: 0 };
           byItem[k].qty += li.qty; byItem[k].tutar += lineTotal(li);
