@@ -74,6 +74,13 @@
     document.body.style.overflow = "";
   }
 
+  function promoLabel(li) {
+    var p = li.promo; if (!p) return "";
+    if (p.type === "treat") return (p.qty && p.qty < li.qty) ? p.qty + " adet ikram" : "ikram";
+    if (p.type === "percent") return "%" + p.value + " indirim";
+    return money(p.value) + " indirim";
+  }
+
   /* ---------- durum ---------- */
   function live(o) { return (o.items || []).filter(function (li) { return li.status !== "void"; }); }
   function pendingCount() {
@@ -180,22 +187,32 @@
       h += '<div class="lines">';
       o.items.forEach(function (li) {
         var lbl = { draft: "yeni", sent: "mutfakta", ready: "hazır", void: "iptal" }[li.status];
-        h += '<div class="line ' + li.status + '" data-lid="' + li.lid + '">' +
+        var gross = Store.lineGross(li), d = Store.lineDisc(li), net = Store.lineTotal(li);
+        h += '<div class="line ' + li.status + (d ? " promo" : "") + '" data-lid="' + li.lid + '">' +
           '<span class="q num">' + li.qty + "</span>" +
           '<span class="nm">' + esc(li.name) + "</span>" +
-          '<span class="pr num">' + money(li.status === "void" ? 0 : li.price * li.qty) + "</span>" +
+          '<span class="pr num">' + (d ? '<s>' + money(gross) + "</s> " : "") +
+          money(li.status === "void" ? 0 : net) + "</span>" +
           '<span class="mt"><span class="st ' + li.status + '">' + lbl + "</span>" +
+          (li.promo ? '<span class="st gift">' + promoLabel(li) + "</span>" : "") +
           (li.note ? '<span class="note">' + esc(li.note) + "</span>" : "") +
           (li.voidReason ? '<span class="note">' + esc(li.voidReason) + "</span>" : "") +
           '<span class="num">' + money(li.price) + "</span></span>";
+
+        var acts = "";
+        if (li.status !== "void") {
+          acts += '<button class="mini alt" type="button" data-promo="' + li.lid + '">' +
+            (li.promo ? "İkram düzenle" : "İkram / indirim") + "</button>";
+        }
         if (li.status === "draft") {
-          h += '<span class="rowact"><span class="stepper sm">' +
+          acts += '<span class="stepper sm">' +
             '<button type="button" data-q="' + li.lid + '|-1" aria-label="Azalt">−</button>' +
             '<span class="v num">' + li.qty + "</span>" +
-            '<button type="button" data-q="' + li.lid + '|1" aria-label="Artır">+</button></span></span>';
+            '<button type="button" data-q="' + li.lid + '|1" aria-label="Artır">+</button></span>';
         } else if (li.status === "sent" || li.status === "ready") {
-          h += '<span class="rowact"><button class="mini" type="button" data-void="' + li.lid + '">İptal et</button></span>';
+          acts += '<button class="mini" type="button" data-void="' + li.lid + '">İptal et</button>';
         }
+        if (acts) h += '<span class="rowact">' + acts + "</span>";
         h += "</div>";
       });
       h += "</div>";
@@ -262,7 +279,9 @@
     L.push("Ciro: " + money(r.ciro));
     L.push("Adisyon: " + r.adisyon + "  ·  Kişi: " + r.kisi);
     L.push("Masa ort.: " + money(r.masaOrt) + "  ·  Kişi başı: " + money(r.kisiOrt));
-    if (r.indirim) L.push("İndirim: " + money(r.indirim));
+    if (r.ikram) L.push("Ürün ikramı: " + money(r.ikram));
+    if (r.indirim) L.push("Adisyon indirimi: " + money(r.indirim));
+    if (r.iptal) L.push("İptal edilen: " + money(r.iptal));
     L.push("");
     L.push("EN ÇOK SATANLAR");
     r.items.slice(0, 5).forEach(function (it, i) {
@@ -296,6 +315,9 @@
       '<div class="stat"><span class="cap">Kişi</span><b class="num">' + r.kisi + "</b></div>" +
       '<div class="stat"><span class="cap">Masa ortalaması</span><b class="num">' + money(r.masaOrt) + "</b></div>" +
       '<div class="stat"><span class="cap">Kişi başı</span><b class="num">' + money(r.kisiOrt) + "</b></div>" +
+      (r.ikram ? '<div class="stat warn"><span class="cap">Ürün ikramı</span><b class="num">' + money(r.ikram) + "</b></div>" : "") +
+      (r.indirim ? '<div class="stat warn"><span class="cap">Adisyon indirimi</span><b class="num">' + money(r.indirim) + "</b></div>" : "") +
+      (r.iptal ? '<div class="stat bad"><span class="cap">İptal edilen</span><b class="num">' + money(r.iptal) + "</b></div>" : "") +
       "</div>";
 
     if (!r.adisyon) {
@@ -531,13 +553,84 @@
       });
   }
 
+  function promoFlow(lid) {
+    var o = Store.order(currentOrder);
+    var li = o.items.filter(function (x) { return x.lid === lid; })[0];
+    if (!li) return;
+    var giftQty = (li.promo && li.promo.type === "treat") ? li.promo.qty : li.qty;
+
+    function body() {
+      var g = Store.lineGross(li), d = Store.lineDisc(li);
+      return "<h3>" + esc(li.name) + "</h3>" +
+        "<p class='lead'>" + li.qty + " adet · " + money(li.price) + " · toplam " + money(g) +
+        (d ? " → <b>" + money(g - d) + "</b>" : "") + "</p>" +
+
+        '<span class="cap" style="display:block;margin-bottom:7px">İkram (ücretsiz)</span>' +
+        '<div class="giftrow">' +
+        '<div class="stepper"><button type="button" id="gMinus">−</button>' +
+        '<span class="v num" id="gVal">' + giftQty + "</span>" +
+        '<button type="button" id="gPlus">+</button></div>' +
+        '<span class="gl">' + li.qty + " adetten kaçı ikram?</span>" +
+        '<button class="btn primary" id="gDo" type="button">İkram et</button></div>' +
+
+        '<span class="cap" style="display:block;margin:16px 0 7px">Satıra indirim</span>' +
+        '<div class="chips" id="pcChips">' +
+        [10, 20, 50].map(function (v) {
+          var on = li.promo && li.promo.type === "percent" && li.promo.value === v;
+          return '<button type="button" data-pc="' + v + '" aria-pressed="' + !!on + '">%' + v + "</button>";
+        }).join("") + "</div>" +
+        '<div class="amtrow"><input id="pAmt" type="number" inputmode="numeric" min="0" step="10" placeholder="Tutar (₺)">' +
+        '<button class="btn ghost" id="pAmtOk" type="button">Uygula</button></div>' +
+
+        '<div class="acts two" style="margin-top:18px">' +
+        (li.promo ? '<button class="btn danger" id="pClear" type="button">Kaldır</button>'
+                  : '<button class="btn ghost" data-close type="button">Vazgeç</button>') +
+        '<button class="btn ghost" data-close type="button">Kapat</button></div>';
+    }
+
+    function mount(card) {
+      var val = card.querySelector("#gVal");
+      card.querySelector("#gMinus").onclick = function () {
+        giftQty = Math.max(1, giftQty - 1); val.textContent = giftQty;
+      };
+      card.querySelector("#gPlus").onclick = function () {
+        giftQty = Math.min(li.qty, giftQty + 1); val.textContent = giftQty;
+      };
+      card.querySelector("#gDo").onclick = function () {
+        Store.setPromo(currentOrder, lid, { type: "treat", qty: giftQty }).then(function () {
+          closeModal(); toast(giftQty + " adet ikram edildi"); render();
+        });
+      };
+      card.querySelector("#pcChips").onclick = function (e) {
+        var b = e.target.closest("[data-pc]"); if (!b) return;
+        Store.setPromo(currentOrder, lid, { type: "percent", value: +b.dataset.pc }).then(function () {
+          closeModal(); toast("%" + b.dataset.pc + " indirim uygulandı"); render();
+        });
+      };
+      card.querySelector("#pAmtOk").onclick = function () {
+        var v = +card.querySelector("#pAmt").value || 0;
+        if (v <= 0) return toast("Tutar gir");
+        Store.setPromo(currentOrder, lid, { type: "amount", value: v }).then(function () {
+          closeModal(); toast(money(v) + " indirim uygulandı"); render();
+        });
+      };
+      var clr = card.querySelector("#pClear");
+      if (clr) clr.onclick = function () {
+        Store.setPromo(currentOrder, lid, null).then(function () {
+          closeModal(); toast("İkram kaldırıldı"); render();
+        });
+      };
+    }
+    modal(body(), mount);
+  }
+
   function voidFlow(lid) {
     var o = Store.order(currentOrder);
     var li = o.items.filter(function (x) { return x.lid === lid; })[0];
     if (!li) return;
     modal("<h3>" + esc(li.name) + " iptal</h3>" +
       "<p class='lead'>Bu ürün mutfağa gitti. İptal sebebi kayda geçer.</p>" +
-      '<div class="chips" id="rChips">' + ["Yanlış girildi", "Müşteri vazgeçti", "Mutfak yapamadı", "İkram edildi"].map(function (r) {
+      '<div class="chips" id="rChips">' + ["Yanlış girildi", "Müşteri vazgeçti", "Mutfak yapamadı"].map(function (r) {
         return '<button type="button" data-r="' + esc(r) + '">' + esc(r) + "</button>";
       }).join("") + "</div>" +
       '<div class="acts two"><button class="btn ghost" data-close type="button">Vazgeç</button>' +
@@ -643,9 +736,11 @@
   function billHTML(o) {
     var t = Store.totals(o), tb = Store.table(o.tableId);
     var rows = live(o).map(function (li) {
+      var d = Store.lineDisc(li);
       return '<tr><td class="q num">' + li.qty + "</td><td>" + esc(li.name) +
-        (li.note ? '<em>' + esc(li.note) + "</em>" : "") + "</td>" +
-        '<td class="num">' + money(li.price * li.qty) + "</td></tr>";
+        (li.note ? "<em>" + esc(li.note) + "</em>" : "") +
+        (d ? "<em>" + promoLabel(li) + " −" + money(d) + "</em>" : "") + "</td>" +
+        '<td class="num">' + money(Store.lineTotal(li)) + "</td></tr>";
     }).join("");
     return '<div class="bill" id="bill">' +
       '<div class="bh"><b>OSMAN GOURMET BEYDAĞI</b><span>Binbirdirek, Klodfarer Cd. No:27/B · Fatih</span>' +
@@ -653,7 +748,10 @@
       '<div class="bmeta"><span>Masa ' + esc(tb ? tb.name : o.tableId) + "</span><span>" + o.guests + " kişi</span>" +
       "<span>" + clock(o.openedAt) + " – " + clock(Date.now()) + "</span><span>" + esc(o.waiter) + "</span></div>" +
       "<table>" + rows + "</table>" +
-      '<div class="btot"><div><span>Ara toplam</span><b class="num">' + money(t.sub) + "</b></div>" +
+      '<div class="btot">' +
+      (t.promo ? '<div><span>Ürünler</span><b class="num">' + money(t.gross) + "</b></div>" +
+                 '<div><span>İkram / indirim</span><b class="num">−' + money(t.promo) + "</b></div>" : "") +
+      '<div><span>Ara toplam</span><b class="num">' + money(t.sub) + "</b></div>" +
       (t.discount ? "<div><span>İndirim</span><b class=\"num\">−" + money(t.discount) + "</b></div>" : "") +
       '<div class="big"><span>TOPLAM</span><b class="num">' + money(t.total) + "</b></div>" +
       (o.guests > 1 ? "<div><span>Kişi başı</span><b class=\"num\">" + money(Math.round(t.total / o.guests)) + "</b></div>" : "") +
@@ -683,7 +781,9 @@
       return "<h3>Hesap · Masa " + esc((Store.table(o.tableId) || {}).name || "") + "</h3>" +
         '<p class="lead">' + o.guests + " kişi · " + live(o).length + " kalem</p>" +
         '<div class="paysum">' +
-        '<div><span>Ara toplam</span><b class="num">' + money(t.sub) + "</b></div>" +
+        '<div><span>Ürünler</span><b class="num">' + money(t.gross) + "</b></div>" +
+        (t.promo ? '<div class="neg"><span>Ürün ikramı / indirimi</span><b class="num">−' + money(t.promo) + "</b></div>" : "") +
+        (t.promo ? '<div><span>Ara toplam</span><b class="num">' + money(t.sub) + "</b></div>" : "") +
         (t.discount ? '<div class="neg"><span>İndirim</span><b class="num">−' + money(t.discount) + "</b></div>" : "") +
         '<div class="big"><span>Toplam</span><b class="num">' + money(t.total) + "</b></div>" +
         (o.guests > 1 ? '<div class="per"><span>Kişi başı (' + o.guests + ")</span><b class=\"num\">" + money(per) + "</b></div>" : "") +
@@ -807,6 +907,7 @@
         if (!li) return;
         return Store.setQty(currentOrder, li.lid, li.qty + (+p[1])).then(render);
       }
+      if ((el = e.target.closest("[data-promo]"))) return promoFlow(el.dataset.promo);
       if ((el = e.target.closest("[data-void]"))) return voidFlow(el.dataset.void);
 
       /* mutfak */

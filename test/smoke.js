@@ -98,6 +98,55 @@ Store.init()
  })
  .then(()=>{
    ok(Store.report(Store.dayStart(),Date.now()+1).adisyon===0,'temizlendi');
+   console.log('\n  --- urun bazli ikram / indirim ---');
+   return Store.openTable('B2',3);
+ })
+ .then(o=>{ O=o; return Store.addItem(o.id,Store.menu().find(x=>x.name==='Çay'),3,''); })
+ .then(o=>{
+   ok(Store.totals(o).gross===225,'3 cay 225 ('+Store.totals(o).gross+')');
+   return Store.setPromo(o.id,o.items[0].lid,{type:'treat',qty:1});
+ })
+ .then(o=>{
+   const t=Store.totals(o);
+   ok(t.promo===75 && t.total===150,'1 cay ikram -> 150 ('+t.total+')');
+   return Store.setPromo(o.id,o.items[0].lid,{type:'treat',qty:3});
+ })
+ .then(o=>{
+   ok(Store.totals(o).total===0,'hepsi ikram -> 0');
+   return Store.setPromo(o.id,o.items[0].lid,{type:'percent',value:20});
+ })
+ .then(o=>{
+   const t=Store.totals(o);
+   ok(t.promo===45 && t.total===180,'%20 satir indirimi -> 180 ('+t.total+')');
+   return Store.addItem(o.id,Store.menu().find(x=>x.name==='Baklava'),1,'');
+ })
+ .then(o=>Store.setPromo(o.id,o.items[1].lid,{type:'amount',value:100}))
+ .then(o=>{
+   const t=Store.totals(o);
+   ok(t.gross===675 && t.promo===145 && t.total===530,'tutar indirimi -> 530 ('+t.total+')');
+   return Store.setDiscount(o.id,{type:'percent',value:10});
+ })
+ .then(o=>{
+   const t=Store.totals(o);
+   ok(t.sub===530 && t.discount===53 && t.total===477,'ustune %10 adisyon indirimi -> 477 ('+t.total+')');
+   return Store.setDiscount(o.id,null);
+ })
+ .then(o=>Store.sendToKitchen(o.id).then(()=>Store.order(o.id)))
+ .then(o=>Store.voidItem(o.id,o.items[1].lid,'Musteri vazgecti'))
+ .then(o=>{
+   const t=Store.totals(o);
+   ok(t.gross===225 && t.total===180,'iptal edilen kalem toplamdan cikti ('+t.total+')');
+   return Store.closeOrder(o.id,'nakit');
+ })
+ .then(()=>{
+   const r=Store.report(Store.dayStart(),Date.now()+1);
+   ok(r.ciro===180,'ikramli adisyon ciro 180 ('+r.ciro+')');
+   ok(r.ikram===45,'rapor ikram/indirim 45 ('+r.ikram+')');
+   ok(r.iptal===450,'rapor iptal 450 ('+r.iptal+')');
+   ok(r.items.length===1 && r.items[0].name==='Çay','iptal edilen urun raporda yok');
+   return Store.wipe();
+ })
+ .then(()=>{
    console.log('\n  '+pass+' gecti, '+fail+' kaldi');
    process.exit(fail?1:0);
  })

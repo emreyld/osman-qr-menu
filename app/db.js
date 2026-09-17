@@ -122,18 +122,39 @@
     return out;
   }
 
-  /* ---------- hesaplama ---------- */
-  function lineTotal(li) { return li.status === "void" ? 0 : (li.price || 0) * li.qty; }
+  /* ---------- hesaplama ----------
+     Bir satırın üç değeri var:
+       gross  = liste fiyatı × adet
+       disc   = satıra uygulanan ikram / indirim
+       net    = ödenecek tutar (iptal edilmişse 0)                         */
+  function lineGross(li) { return (li.price || 0) * li.qty; }
+
+  function lineDisc(li) {
+    if (li.status === "void") return 0;
+    var p = li.promo; if (!p) return 0;
+    var g = lineGross(li);
+    if (p.type === "treat") return Math.min(g, (li.price || 0) * (p.qty || li.qty));
+    if (p.type === "percent") return Math.round(g * p.value / 100);
+    if (p.type === "amount") return Math.min(p.value, g);
+    return 0;
+  }
+
+  function lineTotal(li) {
+    return li.status === "void" ? 0 : Math.max(0, lineGross(li) - lineDisc(li));
+  }
 
   function totals(order) {
-    var sub = (order.items || []).reduce(function (s, li) { return s + lineTotal(li); }, 0);
+    var items = order.items || [];
+    var gross = items.reduce(function (s, li) { return s + (li.status === "void" ? 0 : lineGross(li)); }, 0);
+    var promo = items.reduce(function (s, li) { return s + lineDisc(li); }, 0);
+    var sub = Math.max(0, gross - promo);          /* adisyon indirimi öncesi */
     var disc = 0;
     if (order.discount) {
       if (order.discount.type === "percent") disc = Math.round(sub * order.discount.value / 100);
       else if (order.discount.type === "amount") disc = Math.min(order.discount.value, sub);
       else if (order.discount.type === "treat") disc = sub;
     }
-    return { sub: sub, discount: disc, total: Math.max(0, sub - disc) };
+    return { gross: gross, promo: promo, sub: sub, discount: disc, total: Math.max(0, sub - disc) };
   }
 
   /* ---------- genel API ---------- */
@@ -176,6 +197,8 @@
     menu: flatMenu,
     totals: totals,
     lineTotal: lineTotal,
+    lineGross: lineGross,
+    lineDisc: lineDisc,
     dayStart: dayStart,
 
     openOrders: function () {
@@ -290,6 +313,19 @@
     },
 
 
+    /* ---------- satır bazlı ikram / indirim ---------- */
+    setPromo: function (orderId, lid, promo) {
+      var o = Store.order(orderId); if (!o) return Promise.reject("adisyon yok");
+      var li = o.items.filter(function (x) { return x.lid === lid; })[0];
+      if (!li) return Promise.resolve(o);
+      if (!promo) delete li.promo;
+      else {
+        if (promo.type === "treat") promo.qty = Math.min(promo.qty || li.qty, li.qty);
+        li.promo = promo;
+      }
+      return put("orders", o).then(function () { broadcast("promo"); return o; });
+    },
+
     /* ---------- kalem iptali (mutfağa gitmiş ürün) ---------- */
     voidItem: function (orderId, lid, reason) {
       var o = Store.order(orderId); if (!o) return Promise.reject("adisyon yok");
@@ -394,11 +430,12 @@
 
     report: function (from, to) {
       var list = Store.closedBetween(from, to);
-      var ciro = 0, indirim = 0, kisi = 0;
+      var ciro = 0, indirim = 0, ikram = 0, iptal = 0, kisi = 0;
       var byHour = {}, byItem = {}, byCat = {}, byPay = {};
       list.forEach(function (o) {
         var t = o.totals || totals(o);
-        ciro += t.total; indirim += t.discount; kisi += (o.guests || 0);
+        ciro += t.total; indirim += t.discount; ikram += t.promo; kisi += (o.guests || 0);
+        (o.items || []).forEach(function (li) { if (li.status === "void") iptal += lineGross(li); });
         var h = new Date(o.closedAt).getHours();
         byHour[h] = (byHour[h] || 0) + t.total;
         byPay[o.payment || "—"] = (byPay[o.payment || "—"] || 0) + t.total;
@@ -419,6 +456,8 @@
         adisyon: list.length,
         ciro: ciro,
         indirim: indirim,
+        ikram: ikram,
+        iptal: iptal,
         kisi: kisi,
         masaOrt: list.length ? Math.round(ciro / list.length) : 0,
         kisiOrt: kisi ? Math.round(ciro / kisi) : 0,

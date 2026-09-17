@@ -308,3 +308,20 @@ a{color:inherit;text-decoration:none}
   .noprint{display:none!important}
   .bill{border-radius:0;padding:0}
 }
+
+
+/* ---------- satır bazlı ikram / indirim ---------- */
+.line.promo{border-color:var(--go)}
+.line .pr s{color:var(--muted);font-weight:500;font-size:12.5px}
+.st.gift{background:var(--go);color:var(--go-ink)}
+.mini.alt{color:var(--go);background:var(--go-soft)}
+.rowact{gap:7px;flex-wrap:wrap}
+.giftrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.giftrow .gl{flex:1;min-width:110px;font-size:12.5px;color:var(--muted);font-weight:600}
+.giftrow .btn{min-height:46px;padding:0 14px}
+.amtrow{display:flex;gap:8px;margin-top:9px}
+.amtrow input{flex:1;background:var(--surf-2);border:1px solid var(--line);border-radius:11px;
+  padding:12px 13px;font-size:16px;color:var(--ink);min-width:0}
+.amtrow .btn{min-height:auto;padding:0 16px}
+.stat.warn b{color:var(--warn)}
+.stat.bad b{color:var(--bad)}
